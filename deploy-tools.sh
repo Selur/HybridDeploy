@@ -3,7 +3,7 @@
 readme_file="README"
 binaries_copy="nvhsp"
 binaries_qt="Hybrid bdsup2sub++ d2vwitch delaycut FrameCounter IdxSubCutter vsViewer"
-binaries_32bit="DivX265 neroAacEnc tsMuxeR"
+binaries_32bit="DivX265 neroAacEnc"
 binaries_64bit="""
 aac-enc
 aften
@@ -31,6 +31,7 @@ opusenc
 rav1e
 sox
 telxcc
+tsMuxeR
 vpxenc
 x264
 x265
@@ -76,7 +77,7 @@ wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/cont
 chmod a+x *.AppImage
 
 # https://github.com/linuxdeploy/linuxdeploy/issues/86
-#sed -i 's|AI\x02|\x00\x00\x00|' *.AppImage
+sed -i 's|AI\x02|\x00\x00\x00|' *.AppImage
 
 cmdLine="--appdir=. --plugin qt -l/usr/lib/i386-linux-gnu/libfreetype.so.6 -l/lib/i386-linux-gnu/libz.so.1"
 for bin in $binaries_qt $binaries_64bit $binaries_32bit ; do

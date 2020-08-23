@@ -169,25 +169,23 @@ then
   rm -rf build
 fi
 
+### fast builds ###
+
 ### tsMuxeR
 if echo "$args" | grep -q -i -w -E 'all|tsmuxer'
 then
   mkdir build
-  cd build
-  url="https://www.videohelp.com/download/tsMuxeR_2.6.11.tar.gz"
-  wget --referer $url $url
-  tar xf tsMuxeR_2.6.11.tar.gz
-  upx-ucl -d tsMuxeR
+  cd build 
+  git clone https://github.com/justdan96/tsMuxer
+  cd tsMuxer 
+  ./rebuild_linux.sh
+  cd bin
   strip tsMuxeR
   chmod a+x tsMuxeR
-  cp -f tsMuxeR ..
-  cd ..
+  mv tsMuxeR ../../..
+  cd ../../..
   rm -rf build
 fi
-
-
-
-### fast builds ###
 
 ### telxcc
 if echo "$args" | grep -q -i -w -E 'all|telxcc'
@@ -249,7 +247,7 @@ then
   cd build
   git clone https://github.com/vapoursynth/vapoursynth vapoursynth-git
   cd vapoursynth-git
-  git checkout $(git tag --list | sort -V | tail -1)
+  git checkout $(git tag | grep '^R' | sort -V | tail -1)
   export LD_LIBRARY_PATH=/home/selur/opt/vapoursynth/include/vapoursynth
   cd ..
   qmake
