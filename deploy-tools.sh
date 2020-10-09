@@ -35,6 +35,7 @@ tsMuxeR
 vpxenc
 x264
 x265
+xvid_encraw
 SvtHevcEncApp
 SvtAv1EncApp
 """
@@ -72,7 +73,8 @@ cd $deploy_dir
 git clone --depth=1 https://github.com/Selur/VapoursynthScriptsInHybrid vsscripts
 rm -rf vsscripts/.git
 
-wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+#wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+wget https://artifacts.assassinate-you.net/artifactory/list/linuxdeploy/travis-456/linuxdeploy-x86_64.AppImage
 wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
 chmod a+x *.AppImage
 
@@ -81,7 +83,7 @@ sed -i 's|AI\x02|\x00\x00\x00|' *.AppImage
 
 cmdLine="--appdir=. --plugin qt -l/usr/lib/i386-linux-gnu/libfreetype.so.6 -l/lib/i386-linux-gnu/libz.so.1"
 for bin in $binaries_qt $binaries_64bit $binaries_32bit ; do
-  cmdLine="$cmdLine -e../$bin"
+  cmdLine="$cmdLine --executable ../$bin"
 done
 echo "call: ./linuxdeploy-x86_64.AppImage $cmdLine"
 ./linuxdeploy-x86_64.AppImage $cmdLine
@@ -89,7 +91,7 @@ cp ../*.txt ./usr/share/doc
 
 cd ..
 cp $binaries_copy ./$deploy_dir/usr/bin
-cp $readme_file ./$deploy_dir
+#cp $readme_file ./$deploy_dir
 cd $deploy_dir
 
 mv ./usr/* .
