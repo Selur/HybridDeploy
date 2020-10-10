@@ -109,40 +109,6 @@ cd tools
 
 ### downloads only ###
 
-### nvhsp
-if echo "$args" | grep -q -i -w -E 'all|nvhsp|nvhsp.py'
-then
-  git clone --depth 1 https://github.com/SK-Hardwired/nv_hevc_hdr_patcher build
-  cd build
-  git clone --depth 1 https://github.com/scott-griffiths/bitstring
-
-  cat <<EOL >header1.txt
-#!/usr/bin/env python3
-
-# https://github.com/SK-Hardwired/nv_hevc_hdr_patcher
-# $(git rev-parse HEAD)
-
-# https://github.com/scott-griffiths/bitstring
-# $(git -C bitstring rev-parse HEAD)
-
-# begin bitstring.py
-
-EOL
-
-cat <<EOL >header2.txt
-
-
-# begin nvhsp.py
-
-EOL
-  cat header1.txt bitstring/bitstring.py header2.txt nvhsp.py > ../nvhsp
-
-  cd ..
-  sed -i 's|^from bitstring import|#from bitstring import|' nvhsp
-  chmod a+x nvhsp
-  rm -rf build
-fi
-
 ### DivX265
 if echo "$args" | grep -q -i -w -E 'all|divx265'
 then
@@ -1003,13 +969,13 @@ fi
 if echo "$args" | grep -q -i -w -E 'all|mkvmerge|mkvextract|mkvinfo|mkvtoolnix'
 then
  ## 39+ requires  gcc-7 and boostlib 1.60+
-  git clone --single-branch --branch release-47.0.0 https://gitlab.com/mbunkus/mkvtoolnix.git build
+  git clone --single-branch --branch release-51.0.0 https://gitlab.com/mbunkus/mkvtoolnix.git build
 #  git clone https://gitlab.com/mbunkus/mkvtoolnix.git build
   cd build
   git checkout $(git tag --list | sort -V | tail -1)
   git submodule init
   git submodule update
-#  export CXX=g++-7
+  #export CXX=g++-7
   ./autogen.sh
   ./configure --disable-qt --enable-appimage
   rake $MAKEFLAGS

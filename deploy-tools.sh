@@ -1,7 +1,7 @@
 #!/bin/bash
 
 readme_file="README"
-binaries_copy="nvhsp"
+binaries_copy=""
 binaries_qt="Hybrid bdsup2sub++ d2vwitch delaycut FrameCounter IdxSubCutter vsViewer"
 binaries_32bit="DivX265 neroAacEnc"
 binaries_64bit="""
@@ -73,8 +73,8 @@ cd $deploy_dir
 git clone --depth=1 https://github.com/Selur/VapoursynthScriptsInHybrid vsscripts
 rm -rf vsscripts/.git
 
-#wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-wget https://artifacts.assassinate-you.net/artifactory/list/linuxdeploy/travis-456/linuxdeploy-x86_64.AppImage
+wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+#wget https://artifacts.assassinate-you.net/artifactory/list/linuxdeploy/travis-456/linuxdeploy-x86_64.AppImage
 wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
 chmod a+x *.AppImage
 
@@ -90,7 +90,7 @@ echo "call: ./linuxdeploy-x86_64.AppImage $cmdLine"
 cp ../*.txt ./usr/share/doc
 
 cd ..
-cp $binaries_copy ./$deploy_dir/usr/bin
+#cp $binaries_copy ./$deploy_dir/usr/bin
 #cp $readme_file ./$deploy_dir
 cd $deploy_dir
 
