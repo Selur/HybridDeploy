@@ -660,6 +660,23 @@ fi
 
 
 ### slow builds ###
+if echo "$args" | grep -q -i -w -E 'all|xvid'
+then
+   mkdir build
+   cd build
+   wget http://downloads.xvid.org/downloads/xvid_latest.tar.gz
+   tar xf xvid_latest.tar.gz
+   cd */trunk/xvidcore/build/generic
+   ./bootstrap.sh
+   ./configure --enable-static --disable-shared
+   make $MAKEFLAGS
+   cd ../../examples
+   make $MAKEFLAGS
+   strip xvid_encraw
+   cp -f xvid_encraw  ../../../../
+   cd ../../../../
+   rm -rf build
+fi
 
 ### rav1e
 if echo "$args" | grep -q -i -w -E 'all|rav1e'
