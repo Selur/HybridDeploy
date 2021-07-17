@@ -84,6 +84,7 @@ if [ -x "/usr/bin/apt" ]; then
   libopencore-amrnb-dev \
   libopencore-amrwb-dev \
   libmp3lame-dev \
+  libmpg123-dev \
   libopus-dev \
   libopusfile-dev \
   libsndfile-dev \
@@ -223,23 +224,6 @@ then
   cd ..
   rm -rf build
 fi
-#  cat <<EOF >vsfilters_env.sh
-##!/bin/sh
-#scriptDir="\$(dirname "\$(readlink -f "\$0")")"
-#
-#env="\$HOME/opt/vapoursynth/env.sh"
-#if [ -f "\$env" ]; then
-#  . "\$env"
-#else
-#  env="/opt/vapoursynth/env.sh"
-#  if [ -f "\$env" ]; then
-#    . "\$env"
-#  fi
-#fi
-#$*
-#EOF
-#  chmod a+x vsfilters_env.sh
-#fi
 
 ### lsdvd
 if echo "$args" | grep -q -i -w -E 'all|lsdvd'
@@ -811,7 +795,8 @@ then
   vapoursynth_CFLAGS="-I../vapoursynth/include" \
   vapoursynth_LIBS=" " \
   LDFLAGS="-Wl,--gc-sections" \
-    ./configure
+
+  ./configure
   make $MAKEFLAGS
   strip d2vwitch
   cp -f d2vwitch ../..
@@ -1078,7 +1063,7 @@ then
   build_ffdep opusfile "--disable-doc --disable-examples --disable-http"
   build_ffdep libwebp
   build_ffdep libvpx "--enable-vp9-highbitdepth --disable-unit-tests --disable-examples --disable-tools --disable-docs"
-  build_ffdep lame
+  build_ffdep lame "--disable-gtktest --disable-decoder --disable-frontend"
   build_ffdep opencore-amr
   build_ffdep vo-amrwbenc
   make -C nv-codec-headers install PREFIX="$top/libs"
