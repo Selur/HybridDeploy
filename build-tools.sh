@@ -99,9 +99,10 @@ if [ -x "/usr/bin/apt" ]; then
   libfreetype6-dev \
   libfontconfig1-dev \
   libxcb1-dev \
-  libxcb-shm?-dev \
-  libxcb-xfixes?-dev \
-  libxcb-shape?-dev
+  libxcb-shm*-dev \
+  libxcb-xfixes*-dev \
+  libxcb-shape*-dev \
+  ninja-build
 fi
 
 mkdir -p tools
