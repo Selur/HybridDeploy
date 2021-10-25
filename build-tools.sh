@@ -215,13 +215,18 @@ then
   cd build
   git clone https://github.com/vapoursynth/vapoursynth vapoursynth-git
   cd vapoursynth-git
-  git checkout $(git tag | grep '^R' | sort -V | tail -1)
-  export LD_LIBRARY_PATH=/home/selur/opt/vapoursynth/include/vapoursynth
+  #git checkout $(git tag | grep '^R' | sort -V | tail -1)
+  export LD_LIBRARY_PATH="$PWD/include"
+  export CPPFLAGS="-I$PWD/include"
+  #export CC=/usr/bin/gcc-11
+  #export CXX=/usr/bin/g++-11
+  echo "INCLUDEPATH += $PWD/include" >> ../vsViewer.pro
+  #cat  ../vsViewer.pro
   cd ..
-  qmake
+  qmake vsViewer.pro -spec linux-g++ CONFIG+=release
   make $MAKEFLAGS
-  strip build/release-gcc/vsViewer
-  cp -f build/release-gcc/vsViewer ..
+  strip build/release-64bit-gcc/vsViewer
+  cp -f build/release-64bit-gcc/vsViewer ..
   cd ..
   rm -rf build
 fi
