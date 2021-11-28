@@ -140,20 +140,20 @@ fi
 ### fast builds ###
 
 ### tsMuxeR
-if echo "$args" | grep -q -i -w -E 'all|tsmuxer'
-then
-  mkdir build
-  cd build 
-  git clone https://github.com/justdan96/tsMuxer
-  cd tsMuxer 
-  ./rebuild_linux.sh
-  cd bin
-  strip tsMuxeR
-  chmod a+x tsMuxeR
-  mv tsMuxeR ../../..
-  cd ../../..
-  rm -rf build
-fi
+#if echo "$args" | grep -q -i -w -E 'all|tsmuxer'
+#then
+#  mkdir build
+#  cd build 
+#  git clone https://github.com/justdan96/tsMuxer
+#  cd tsMuxer 
+#  ./rebuild_linux.sh
+#  cd bin
+#  strip tsMuxeR
+#  chmod a+x tsMuxeR
+#  mv tsMuxeR ../../..
+#  cd ../../..
+ # rm -rf build
+#fi
 
 ### telxcc
 if echo "$args" | grep -q -i -w -E 'all|telxcc'
@@ -222,6 +222,7 @@ then
   #export CXX=/usr/bin/g++-11
   echo "INCLUDEPATH += $PWD/include" >> ../vsViewer.pro
   #cat  ../vsViewer.pro
+  #export LD_LIBRARY_PATH=~/opt/vapoursynth/include/vapoursynth
   cd ..
   qmake vsViewer.pro -spec linux-g++ CONFIG+=release
   make $MAKEFLAGS
@@ -775,7 +776,7 @@ then
   export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig"
 
   git clone --depth 1 https://github.com/dubhater/D2VWitch
-  git clone --depth 1 https://github.com/FFmpeg/FFmpeg
+  git clone --depth 1 --branch release/4.4 https://github.com/FFmpeg/FFmpeg
   git clone --depth 1 https://github.com/vapoursynth/vapoursynth
 
   build_nasm
@@ -796,10 +797,11 @@ then
   make $MAKEFLAGS
   make install
 
+  export vapoursynth_CFLAGS="-I../vapoursynth/include"
+  export vapoursynth_LIBS=" "
+
   cd ../D2VWitch
   autoreconf -if
-  vapoursynth_CFLAGS="-I../vapoursynth/include" \
-  vapoursynth_LIBS=" " \
   LDFLAGS="-Wl,--gc-sections" \
 
   ./configure
