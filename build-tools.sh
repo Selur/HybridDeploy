@@ -140,20 +140,22 @@ fi
 ### fast builds ###
 
 ### tsMuxeR
-#if echo "$args" | grep -q -i -w -E 'all|tsmuxer'
-#then
-#  mkdir build
-#  cd build 
-#  git clone https://github.com/justdan96/tsMuxer
-#  cd tsMuxer 
-#  ./rebuild_linux.sh
-#  cd bin
-#  strip tsMuxeR
-#  chmod a+x tsMuxeR
-#  mv tsMuxeR ../../..
-#  cd ../../..
- # rm -rf build
-#fi
+if echo "$args" | grep -q -i -w -E 'all|tsmuxer'
+then
+  mkdir build
+  cd build
+  git clone https://github.com/justdan96/tsMuxer
+  cd tsMuxer
+  export CC=/usr/bin/gcc-11
+  export CXX=/usr/bin/g++-11
+  ./rebuild_linux.sh
+  cd bin
+  strip tsMuxeR
+  chmod a+x tsMuxeR
+  mv tsMuxeR ../../..
+  cd ../../..
+  rm -rf build
+fi
 
 ### telxcc
 if echo "$args" | grep -q -i -w -E 'all|telxcc'
