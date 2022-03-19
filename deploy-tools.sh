@@ -75,9 +75,6 @@ wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/lin
 wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
 chmod a+x *.AppImage
 
-# https://github.com/linuxdeploy/linuxdeploy/issues/86
-sed -i 's|AI\x02|\x00\x00\x00|' *.AppImage
-
 cmdLine="--appdir=. --plugin qt -l/usr/lib/i386-linux-gnu/libfreetype.so.6 -l/lib/i386-linux-gnu/libz.so.1"
 for bin in $binaries_qt $binaries_64bit $binaries_32bit ; do
   cmdLine="$cmdLine --executable ../$bin"
