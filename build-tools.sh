@@ -58,12 +58,13 @@ if [ -x "/usr/bin/apt" ]; then
   gettext \
   libtool-bin \
   pkg-config \
-  qt5-default \
+  qt6-base-dev \
   docbook-xsl \
   xsltproc \
   rake \
   ragel \
   libgl1-mesa-dev \
+  libgmp-dev \
   libboost-filesystem-dev \
   libboost-system-dev \
   libboost-regex-dev \
@@ -102,6 +103,7 @@ if [ -x "/usr/bin/apt" ]; then
   libxcb-shm*-dev \
   libxcb-xfixes*-dev \
   libxcb-shape*-dev \
+  libcmark-dev \
   ninja-build
 fi
 
@@ -148,7 +150,7 @@ then
   cd tsMuxer
   export CC=/usr/bin/gcc-11
   export CXX=/usr/bin/g++-11
-  ./rebuild_linux.sh
+  ./scripts/rebuild_linux.sh
   cd bin
   strip tsMuxeR
   chmod a+x tsMuxeR
@@ -551,14 +553,12 @@ then
   git clone https://github.com/gpac/gpac build
   cd build
   #git checkout $(git tag --list | sort -V | tail -1)
-  ./configure --static-mp4box \
-    --disable-wx \
+  ./configure --static-bin \
     --disable-alsa \
     --disable-jack \
     --disable-pulseaudio \
     --disable-x11 \
     --disable-ssl \
-    --use-js=no \
     --use-faad=no \
     --use-mad=no \
     --use-xvid=no \
@@ -632,8 +632,8 @@ then
    cd ../../examples
    make $MAKEFLAGS
    strip xvid_encraw
-   cp -f xvid_encraw  ../../../../
-   cd ../../../../
+   cp -f xvid_encraw  ../../../../../
+   cd ../../../../../
    rm -rf build
 fi
 
@@ -964,8 +964,8 @@ fi
 if echo "$args" | grep -q -i -w -E 'all|mkvmerge|mkvextract|mkvinfo|mkvtoolnix'
 then
  ## 39+ requires  gcc-7 and boostlib 1.60+
-  git clone --single-branch --branch release-51.0.0 https://gitlab.com/mbunkus/mkvtoolnix.git build
-#  git clone https://gitlab.com/mbunkus/mkvtoolnix.git build
+#  git clone --single-branch --branch release-51.0.0 https://gitlab.com/mbunkus/mkvtoolnix.git build
+  git clone https://gitlab.com/mbunkus/mkvtoolnix.git build
   cd build
   git checkout $(git tag --list | sort -V | tail -1)
   git submodule init
@@ -998,7 +998,7 @@ fi
 ## SVT-AV1
 if echo "$args" | grep -q -i -w -E 'all|svtav1'
 then
-  git clone https://github.com/OpenVisualCloud/SVT-AV1.git build
+  git clone https://gitlab.com/AOMediaCodec/SVT-AV1.git build
   mkdir -p build/build
   cd build/build
   cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
