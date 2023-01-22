@@ -1023,7 +1023,6 @@ then
   export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig"
 
   git clone --depth 1 https://github.com/FFmpeg/FFmpeg ffmpeg-src
-  git clone --depth 1 https://github.com/dyne/frei0r
   git clone --depth 1 https://github.com/fribidi/fribidi
   git clone --depth 1 https://github.com/harfbuzz/harfbuzz
   git clone --depth 1 https://github.com/ultravideo/kvazaar
@@ -1078,15 +1077,6 @@ then
   build_ffdep vo-amrwbenc
   make -C nv-codec-headers install PREFIX="$top/libs"
 
-  cd "$top/frei0r"
-  ./autogen.sh
-  ./configure --prefix="$top/libs" --enable-static --disable-shared
-  make $MAKEFLAGS
-  cp frei0r.pc "$top/libs/lib/pkgconfig"
-  cp include/frei0r.h "$top/libs/include"
-  mkdir -p "$top/libs/lib/frei0r-1"
-  cp src/.libs/*.a "$top/libs/lib/frei0r-1"
-
   cd "$top/x264"
   ./configure \
     --prefix="$top/libs" \
@@ -1125,7 +1115,6 @@ EOF
     --disable-ffplay \
     --disable-ffprobe \
     --disable-doc \
-    --enable-frei0r \
     --enable-libass \
     --enable-libbluray \
     --enable-libfontconfig \
@@ -1163,9 +1152,6 @@ EOF
   cat <<EOL >../ffmpeg-sources.txt
 https://github.com/FFmpeg/FFmpeg
 $(git -C ffmpeg-src rev-parse HEAD)
-
-https://github.com/dyne/frei0r
-$(git -C frei0r rev-parse HEAD)
 
 https://github.com/fribidi/fribidi
 $(git -C fribidi rev-parse HEAD)
