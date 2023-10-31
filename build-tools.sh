@@ -750,23 +750,6 @@ then
   rm -rf build
 fi
 
-## ffmbc
-if echo "$args" | grep -q -i -w -E 'all|ffmbc'
-then
-  git clone --branch ffmbc --depth 1 https://github.com/bcoudurier/FFmbc build
-  cd build
-  ./configure --enable-gpl --disable-doc --disable-debug
-  make $MAKEFLAGS
-  cp -f ffmbc ..
-  cd ..
-
-  cat <<EOL >ffmbc-sources.txt
-https://github.com/bcoudurier/FFmbc
-$(git -C build rev-parse HEAD)
-EOL
-  rm -rf build
-fi
-
 ### d2vwitch
 if echo "$args" | grep -q -i -w -E 'all|d2vwitch'
 then
