@@ -70,6 +70,7 @@ if [ -x "/usr/bin/apt" ]; then
   libboost-regex-dev \
   libboost-date-time-dev \
   libdvdread-dev \
+  libfdk-aac-dev \
   libogg-dev \
   libvorbis-dev \
   libflac-dev \
@@ -413,16 +414,15 @@ fi
 ### fdkaac
 if echo "$args" | grep -q -i -w -E 'all|fdkaac|fdk-aac|aac-enc'
 then
-  git clone https://git.code.sf.net/p/opencore-amr/fdk-aac build
+  git clone https://github.com/nu774/fdkaac.git build
   cd build
-  git checkout $(git tag --list | sort -V | grep -v rc | tail -1)
-  ./autogen.sh
-  ./configure --disable-shared --enable-example
-  make $MAKEFLAGS
-  strip aac-enc
-  cp -f aac-enc ..
+  autoreconf -i
+  ./configure
+  make
+  strip fdkaac
+  cp -f fdkaac ..
   cd ..
-  rm -rf build
+  rm -rf
 fi
 
 ### oggenc
