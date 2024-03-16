@@ -422,7 +422,7 @@ then
   strip fdkaac
   cp -f fdkaac ..
   cd ..
-  rm -rf
+  rm -rf build
 fi
 
 ### oggenc
@@ -934,7 +934,7 @@ if echo "$args" | grep -q -i -w -E 'all|mencoder|mplayer'
 then
   svn checkout svn://svn.mplayerhq.hu/mplayer/trunk build
   cd build
-  git clone --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
+  git clone --depth 1 --branch n5.1.4 https://git.ffmpeg.org/ffmpeg.git ffmpeg
   ./configure --disable-relocatable --enable-runtime-cpudetection
   make $MAKEFLAGS
   strip mencoder mplayer
@@ -1134,7 +1134,7 @@ EOF
   cd "$top"
   cat <<EOL >../ffmpeg-sources.txt
 https://github.com/FFmpeg/FFmpeg
-$(git -C ffmpeg-src rev-parse HEAD)
+$(git --branch n5.1.4 -C ffmpeg-src rev-parse HEAD)
 
 https://github.com/fribidi/fribidi
 $(git -C fribidi rev-parse HEAD)

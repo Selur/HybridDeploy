@@ -1,11 +1,11 @@
 #!/bin/bash
-#set -e
+set -e
 
 readme_file="README.md"
 binaries_qt="Hybrid bdsup2sub++ d2vwitch delaycut FrameCounter IdxSubCutter vsViewer"
 binaries_32bit="DivX265 neroAacEnc"
 binaries_64bit="""
-aac-enc
+fdkaac
 aften
 aomenc
 faac
@@ -39,7 +39,6 @@ xvid_encraw
 SvtHevcEncApp
 SvtAv1EncApp
 """
-
 deploy_dir="hybrid"
 
 #set -e
@@ -66,6 +65,7 @@ sudo apt install --no-install-recommends -y \
   libstdc++6:i386
 
 cd tools
+#ORIGIN=$(dirname $0)
 rm -rf $deploy_dir
 mkdir $deploy_dir
 cd $deploy_dir
@@ -103,7 +103,9 @@ make
 cd ..
 
 for bin in $binaries_qt $binaries_64bit ; do
-  ./patchelf/src/patchelf --set-rpath '$ORIGIN/lib' $bin
+  if [ "$bin" != "MP4Box" ]; then
+    ./patchelf/src/patchelf --set-rpath '$ORIGIN/lib' $bin
+  fi
 done
 
 for bin in $binaries_32bit ; do
