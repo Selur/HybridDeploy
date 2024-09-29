@@ -930,18 +930,18 @@ EOL
 fi
 
 ### mplayer / mencoder
-if echo "$args" | grep -q -i -w -E 'all|mencoder|mplayer'
-then
-  svn checkout svn://svn.mplayerhq.hu/mplayer/trunk build
-  cd build
-  git clone --depth 1 --branch n5.1.4 https://git.ffmpeg.org/ffmpeg.git ffmpeg
-  ./configure --disable-relocatable --enable-runtime-cpudetection
-  make $MAKEFLAGS
-  strip mencoder mplayer
-  cp -f mencoder mplayer ..
-  cd ..
-  rm -rf build
-fi
+#if echo "$args" | grep -q -i -w -E 'all|mencoder|mplayer'
+#then
+#  svn checkout svn://svn.mplayerhq.hu/mplayer/trunk build
+#  cd build
+#  git clone --depth 1 --branch n5.1.4 https://git.ffmpeg.org/ffmpeg.git ffmpeg
+#  ./configure --disable-relocatable --enable-runtime-cpudetection
+#  make $MAKEFLAGS
+#  strip mencoder mplayer
+#  cp -f mencoder mplayer ..
+#  cd ..
+#  rm -rf build
+#fi
 
 ### mkvtoolnix
 if echo "$args" | grep -q -i -w -E 'all|mkvmerge|mkvextract|mkvinfo|mkvtoolnix'
@@ -1005,9 +1005,13 @@ then
   export PATH="$top:$PATH"
   export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig"
 
-  git clone --depth 1 https://github.com/FFmpeg/FFmpeg ffmpeg-src
+  git clone --depth 1 --branch release/6.1 https://github.com/FFmpeg/FFmpeg ffmpeg-src
   git clone --depth 1 https://github.com/fribidi/fribidi
   git clone --depth 1 https://github.com/harfbuzz/harfbuzz
+  cd harfbuzz
+  git fetch --depth 1 origin 30485ee8c3d43c553afb9d78b9924cb71c8d2f19
+  git checkout 30485ee8c3d43c553afb9d78b9924cb71c8d2f19
+  cd ..
   git clone --depth 1 https://github.com/ultravideo/kvazaar
   git clone --depth 1 https://github.com/libass/libass
   git clone --depth 1 https://code.videolan.org/videolan/libbluray.git
@@ -1037,8 +1041,9 @@ then
   old_mkflags="$MAKEFLAGS"; MAKEFLAGS="-j1"
   build_ffdep fribidi
   MAKEFLAGS="$old_mkflags"
+  ls
 
-  cd harfbuzz && ./autogen.sh && cd ..
+  cd harfbuzz && ls && ./autogen.sh && cd .. && ls
   build_ffdep harfbuzz "--with-glib=no"
 
   cd libbluray && git submodule init && git submodule update && cd ..
@@ -1134,7 +1139,7 @@ EOF
   cd "$top"
   cat <<EOL >../ffmpeg-sources.txt
 https://github.com/FFmpeg/FFmpeg
-$(git --branch n5.1.4 -C ffmpeg-src rev-parse HEAD)
+$(git --branch release/6.1 -C ffmpeg-src rev-parse HEAD)
 
 https://github.com/fribidi/fribidi
 $(git -C fribidi rev-parse HEAD)
