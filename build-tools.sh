@@ -149,8 +149,8 @@ then
   cd build
   git clone https://github.com/justdan96/tsMuxer
   cd tsMuxer
-  export CC=/usr/bin/gcc-11
-  export CXX=/usr/bin/g++-11
+  export CC=/usr/bin/gcc-13
+  export CXX=/usr/bin/g++-13
   ./scripts/rebuild_linux.sh
   cd bin
   strip tsMuxeR
@@ -205,7 +205,7 @@ then
   git clone https://github.com/Selur/IdxSubCutter build
   cd build
   qmake
-  make CXX="g++ -std=c++11"
+  make
   strip IdxSubCutter
   cp -f IdxSubCutter ..
   cd ..
@@ -223,8 +223,6 @@ then
   #git checkout $(git tag | grep '^R' | sort -V | tail -1)
   export LD_LIBRARY_PATH="$PWD/include"
   export CPPFLAGS="-I$PWD/include"
-  #export CC=/usr/bin/gcc-11
-  #export CXX=/usr/bin/g++-11
   echo "INCLUDEPATH += $PWD/include" >> ../vsViewer.pro
   #cat  ../vsViewer.pro
   #export LD_LIBRARY_PATH=~/opt/vapoursynth/include/vapoursynth
@@ -391,24 +389,15 @@ fi
 ### BDSup2SubPlusPlus
 if echo "$args" | grep -q -i -w -E 'all|bdsup2sub++|bdsup2subplusplus|bdsup2sub'
 then
-  git clone https://github.com/amichaeltm/BDSup2SubPlusPlus build
+  git clone https://github.com/Selur/BDSup2SubPlusPlus build
   cd build
-  sed -i 's|QSettings::IniFormat, QSettings::UserScope, "bdsup2sub++", "bdsup2sub++"|QSettings::IniFormat, QSettings::UserScope, ".config", "bdsup2sub++"|' src/bdsup2sub.cpp
-  git diff >../bdsup2sub++.patch
   qmake src/bdsup2sub++.pro
   make clean
   make $MAKEFLAGS
   strip bdsup2sub++
   cp -f bdsup2sub++ ..
   cd ..
-  cat <<EOL >bdsup2sub++-sources.txt
-https://github.com/amichaeltm/BDSup2SubPlusPlus
-$(git -C build rev-parse HEAD)
-
-Patch applied:
-EOL
-  cat bdsup2sub++.patch >> bdsup2sub++-sources.txt
-  rm -rf build bdsup2sub++.patch
+  rm -rf build
 fi
 
 ### fdkaac
@@ -623,9 +612,8 @@ if echo "$args" | grep -q -i -w -E 'all|xvid'
 then
    mkdir build
    cd build
-   wget http://downloads.xvid.org/downloads/xvid_latest.tar.gz
-   tar xf xvid_latest.tar.gz
-   cd */trunk/xvidcore/build/generic
+   git clone https://github.com/m-ab-s/xvid.git
+   cd xvid/xvidcore/build/generic
    ./bootstrap.sh
    ./configure --enable-static --disable-shared
    make $MAKEFLAGS
@@ -934,7 +922,8 @@ if echo "$args" | grep -q -i -w -E 'all|mencoder|mplayer'
 then
   svn checkout svn://svn.mplayerhq.hu/mplayer/trunk build
   cd build
-  git clone --depth 1 --branch n5.1.4 https://git.ffmpeg.org/ffmpeg.git ffmpeg
+  #git clone --depth 1 --branch n5.1.4 https://git.ffmpeg.org/ffmpeg.git ffmpeg
+  git clone --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
   ./configure --disable-relocatable --enable-runtime-cpudetection
   make $MAKEFLAGS
   strip mencoder mplayer
