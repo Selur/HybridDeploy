@@ -278,7 +278,7 @@ then
   cd build
   git checkout $(git tag --list | sort -V | grep -v rc | tail -1)
   ./autogen.sh
-  ./configure --disable-shared
+  CFLAGS="-DKVZ_BIT_DEPTH=10" ./configure --disable-shared
   make $MAKEFLAGS
   strip src/kvazaar
   cp -f src/kvazaar ..
