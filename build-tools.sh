@@ -149,8 +149,6 @@ then
   cd build
   git clone https://github.com/justdan96/tsMuxer
   cd tsMuxer
-  export CC=/usr/bin/gcc-13
-  export CXX=/usr/bin/g++-13
   ./scripts/rebuild_linux.sh
   cd bin
   strip tsMuxeR
