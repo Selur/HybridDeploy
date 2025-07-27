@@ -218,7 +218,7 @@ then
   cd build
   git clone https://github.com/vapoursynth/vapoursynth vapoursynth-git
   cd vapoursynth-git
-  #git checkout $(git tag | grep '^R' | sort -V | tail -1)
+  git checkout $(git tag | grep '^R' | sort -V | tail -1)
   export LD_LIBRARY_PATH="$PWD/include"
   export CPPFLAGS="-I$PWD/include"
   echo "INCLUDEPATH += $PWD/include" >> ../vsViewer.pro
@@ -935,7 +935,8 @@ if echo "$args" | grep -q -i -w -E 'all|mkvmerge|mkvextract|mkvinfo|mkvtoolnix'
 then
  ## 39+ requires  gcc-7 and boostlib 1.60+
 #  git clone --single-branch --branch release-51.0.0 https://gitlab.com/mbunkus/mkvtoolnix.git build
-  git clone https://gitlab.com/mbunkus/mkvtoolnix.git build
+#  git clone https://gitlab.com/mbunkus/mkvtoolnix.git build
+  git clone https://codeberg.org/mbunkus/mkvtoolnix.git build
   cd build
   git checkout $(git tag --list | sort -V | tail -1)
   git submodule init
