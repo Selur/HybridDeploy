@@ -3,6 +3,8 @@ set -e
 
 MAKEFLAGS="-j4"
 
+base_dir=$(pwd)/tools/
+
 build_nasm () {
   ver="2.14.02"
   wget https://www.nasm.us/pub/nasm/releasebuilds/$ver/nasm-${ver}.tar.xz
@@ -117,25 +119,27 @@ cd tools
 ### DivX265
 if echo "$args" | grep -q -i -w -E 'all|divx265'
 then
+  cd "$base_dir"
   mkdir build
   cd build
   wget -O DivX265 http://download.divx.com/hevc/DivX265_1_5_8
   chmod a+x DivX265
-  cp -f DivX265 ..
-  cd ..
+  cp -f DivX265 "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### neroAac
 if echo "$args" | grep -q -i -w -E 'all|neroaac|neroaacenc'
 then
+  cd "$base_dir"
   mkdir build
   cd build
   url="https://www.videohelp.com/download/NeroAACCodec-1.5.4.zip"
   wget --referer $url $url
   unzip NeroAACCodec-1.5.4.zip
   chmod a+x linux/neroAacEnc
-  cp -f linux/neroAacEnc ..
+  cp -f linux/neroAacEnc "$base_dir"
   cd ..
   rm -rf build
 fi
@@ -145,6 +149,7 @@ fi
 ### tsMuxeR
 if echo "$args" | grep -q -i -w -E 'all|tsmuxer'
 then
+  cd "$base_dir"
   mkdir build
   cd build
   git clone https://github.com/justdan96/tsMuxer
@@ -153,14 +158,15 @@ then
   cd bin
   strip tsMuxeR
   chmod a+x tsMuxeR
-  mv tsMuxeR ../../..
-  cd ../../..
+  mv tsMuxeR "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### telxcc
 if echo "$args" | grep -q -i -w -E 'all|telxcc'
 then
+  cd "$base_dir"
   git clone https://github.com/kanongil/telxcc build
   gcc -O3 build/telxcc.c -o telxcc -s
   cat <<EOL >telxcc-sources.txt
@@ -173,47 +179,50 @@ fi
 ### FLVExtractCL
 if echo "$args" | grep -q -i -w -E 'all|flvextract|flvextractcl'
 then
+  cd "$base_dir"
   mkdir build
   cd build
   wget http://www.moitah.net/download/latest/FLVExtractCL_cpp.zip
   unzip FLVExtractCL_cpp.zip
   make
   strip FLVExtractCL
-  cp -f FLVExtractCL ..
-  cd ..
+  cp -f FLVExtractCL "$base_dir"
+  cd  "$base_dir"
   rm -rf build
 fi
 
 ### FrameCounter
 if echo "$args" | grep -q -i -w -E 'all|framecounter'
 then
+  cd "$base_dir"
   git clone https://github.com/Selur/FrameCounter build
   cd build
   qmake
   make
   strip FrameCounter
-  cp -f FrameCounter ..
-  cd ..
+  cp -f FrameCounter "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### IdxSubCutter
 if echo "$args" | grep -q -i -w -E 'all|idxsubcutter'
 then
+  cd "$base_dir"
   git clone https://github.com/Selur/IdxSubCutter build
   cd build
   qmake
   make
   strip IdxSubCutter
-  cp -f IdxSubCutter ..
-  cd ..
+  cp -f IdxSubCutter "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### vsViewer
 if echo "$args" | grep -q -i -w -E 'all|vsviewer'
 then
-#  git clone --single-branch --branch debug2 https://github.com/Selur/vsViewer build
+  cd "$base_dir"
   git clone https://github.com/Selur/vsViewer build
   cd build
   git clone https://github.com/vapoursynth/vapoursynth vapoursynth-git
@@ -228,22 +237,23 @@ then
   qmake vsViewer.pro -spec linux-g++ CONFIG+=release
   make $MAKEFLAGS
   strip build/release-64bit-gcc/vsViewer
-  cp -f build/release-64bit-gcc/vsViewer ..
-  cd ..
+  cp -f build/release-64bit-gcc/vsViewer "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### lsdvd
 if echo "$args" | grep -q -i -w -E 'all|lsdvd'
 then
+  cd "$base_dir"
   git clone https://git.code.sf.net/p/lsdvd/git build
   cd build
   autoreconf -if
   ./configure
   make
   strip lsdvd
-  cp -f lsdvd ..
-  cd ..
+  cp -f lsdvd "$base_dir"
+  cd  "$base_dir"
   cat <<EOL >lsdvd-sources.txt
 https://git.code.sf.net/p/lsdvd/git
 $(git -C build rev-parse HEAD)
@@ -254,14 +264,15 @@ fi
 ### ffdcaenc
 if echo "$args" | grep -q -i -w -E 'all|ffdcaenc|dcaenc'
 then
+  cd "$base_dir"
   git clone https://github.com/filler56789/ffdcaenc-2 build
   cd build
   autoreconf -if
   ./configure --disable-shared
   make
   strip ffdcaenc
-  cp -f ffdcaenc ..
-  cd ..
+  cp -f ffdcaenc "$base_dir"
+  cd "$base_dir"
   cat <<EOL >ffdcaenc-sources.txt
 https://github.com/filler56789/ffdcaenc-2
 $(git -C build rev-parse HEAD)
@@ -272,6 +283,7 @@ fi
 ### kvazaar
 if echo "$args" | grep -q -i -w -E 'all|kvazaar'
 then
+  cd "$base_dir"
   git clone https://github.com/ultravideo/kvazaar build
   cd build
   git checkout $(git tag --list | sort -V | grep -v rc | tail -1)
@@ -279,14 +291,15 @@ then
   CFLAGS="-DKVZ_BIT_DEPTH=10" ./configure --disable-shared
   make $MAKEFLAGS
   strip src/kvazaar
-  cp -f src/kvazaar ..
-  cd ..
+  cp -f src/kvazaar "$base_dir"
+  cd  "$base_dir"
   rm -rf build
 fi
 
 ### lame
 if echo "$args" | grep -q -i -w -E 'all|lame'
 then
+  cd "$base_dir"
   mkdir build
   cd build
   ver=$(wget -q -O- 'https://sourceforge.net/p/lame/svn/HEAD/tree/tags' | \
@@ -301,14 +314,15 @@ then
   ./configure --disable-shared --enable-nasm --disable-rpath --disable-gtktest
   make $MAKEFLAGS
   strip frontend/lame
-  cp -f frontend/lame ../..
-  cd ../..
+  cp -f frontend/lame "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### faac
 if echo "$args" | grep -q -i -w -E 'all|faac'
 then
+  cd "$base_dir"
   git clone https://github.com/knik0/faac build
   cd build
   git checkout $(git tag --list | grep '^[1-9]' | sort -V | tail -1)
@@ -316,14 +330,15 @@ then
   ./configure --disable-shared
   make $MAKEFLAGS
   strip frontend/faac
-  cp -f frontend/faac ..
-  cd ..
+  cp -f frontend/faac "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### flac
 if echo "$args" | grep -q -i -w -E 'all|flac'
 then
+  cd "$base_dir"
   git clone https://github.com/xiph/flac build
   cd build
   git checkout $(git tag --list | sort -V | tail -1)
@@ -331,22 +346,23 @@ then
   ./configure --disable-shared --disable-rpath
   make $MAKEFLAGS
   strip src/flac/flac
-  cp -f src/flac/flac ..
-  cd ..
+  cp -f src/flac/flac "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### aften
 if echo "$args" | grep -q -i -w -E 'all|aften'
 then
+  cd "$base_dir"
   git clone https://git.code.sf.net/p/aften/code build
   mkdir -p build/build
   cd build/build
   cmake .. -DCMAKE_BUILD_TYPE=Release -DSHARED=OFF
   make $MAKEFLAGS
   strip aften
-  cp -f aften ../..
-  cd ../..
+  cp -f aften "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
@@ -354,6 +370,7 @@ fi
 # TODO: build static deps?
 if echo "$args" | grep -q -i -w -E 'all|sox'
 then
+  cd "$base_dir"
   git clone https://git.code.sf.net/p/sox/code build
   cd build
   git checkout $(git tag --list | sort -V | grep -v rc | tail -1)
@@ -361,22 +378,23 @@ then
   ./configure --disable-shared
   make $MAKEFLAGS
   strip src/sox
-  cp -f src/sox ..
-  cd ..
+  cp -f src/sox "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### delaycut
 if echo "$args" | grep -q -i -w -E 'all|delaycut'
 then
+  cd "$base_dir"
   git clone https://github.com/darealshinji/delaycut build
   cd build
   git checkout $(git tag --list | sort -V | tail -1)
   qmake
   make $MAKEFLAGS
   strip delaycut
-  cp -f delaycut ..
-  cd ..
+  cp -f delaycut "$base_dir".
+  cd "$base_dir"
   rm -rf build
 fi
 
@@ -387,34 +405,37 @@ fi
 ### BDSup2SubPlusPlus
 if echo "$args" | grep -q -i -w -E 'all|bdsup2sub++|bdsup2subplusplus|bdsup2sub'
 then
+  cd "$base_dir"
   git clone https://github.com/Selur/BDSup2SubPlusPlus build
   cd build
   qmake src/bdsup2sub++.pro
   make clean
   make $MAKEFLAGS
   strip bdsup2sub++
-  cp -f bdsup2sub++ ..
-  cd ..
+  cp -f bdsup2sub++ "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### fdkaac
 if echo "$args" | grep -q -i -w -E 'all|fdkaac|fdk-aac|aac-enc'
 then
+  cd "$base_dir"
   git clone https://github.com/nu774/fdkaac.git build
   cd build
   autoreconf -i
   ./configure
   make
   strip fdkaac
-  cp -f fdkaac ..
-  cd ..
+  cp -f fdkaac "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### oggenc
 if echo "$args" | grep -q -i -w -E 'all|oggenc'
 then
+  cd "$base_dir"
   mkdir build
   cd build
   git clone https://github.com/xiph/ogg
@@ -443,8 +464,8 @@ then
   make $MAKEFLAGS -C oggenc
 
   strip oggenc/oggenc
-  cp -f oggenc/oggenc ../..
-  cd ../..
+  cp -f oggenc/oggenc "$base_dir"
+  cd "$base_dir"
 
   cat <<EOL >oggenc-sources.txt
 https://github.com/xiph/ogg
@@ -462,6 +483,7 @@ fi
 ### opusenc
 if echo "$args" | grep -q -i -w -E 'all|opusenc'
 then
+  cd "$base_dir"
   mkdir build
   cd build
   git clone https://github.com/xiph/opus
@@ -515,8 +537,8 @@ then
   make $MAKEFLAGS
 
   strip opusenc
-  cp -f opusenc ../..
-  cd ../..
+  cp -f opusenc "$base_dir"
+  cd "$base_dir"
 
   cat <<EOL >opusenc-sources.txt
 https://github.com/xiph/opus
@@ -537,6 +559,7 @@ fi
 ### MP4Box
 if echo "$args" | grep -q -i -w -E 'all|mp4box'
 then
+  cd "$base_dir"
   git clone https://github.com/gpac/gpac build
   cd build
   #git checkout $(git tag --list | sort -V | tail -1)
@@ -557,14 +580,15 @@ then
     --use-a52=no
   make $MAKEFLAGS || true
   strip bin/gcc/MP4Box
-  cp -f bin/gcc/MP4Box ..
-  cd ..
+  cp -f bin/gcc/MP4Box "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### mp4fpsmod
 if echo "$args" | grep -q -i -w -E 'all|mp4fpsmod'
 then
+  cd "$base_dir"
   git clone https://github.com/nu774/mp4fpsmod build
   cd build
   git checkout $(git tag --list | sort -V | tail -1)
@@ -572,14 +596,15 @@ then
   ./configure
   make $MAKEFLAGS
   strip mp4fpsmod
-  cp -f mp4fpsmod ..
-  cd ..
+  cp -f mp4fpsmod "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### vpxenc
 if echo "$args" | grep -q -i -w -E 'all|vpxenc'
 then
+  cd "$base_dir"
   git clone --depth 1 https://chromium.googlesource.com/webm/libvpx build
   cd build
   ./configure \
@@ -593,8 +618,8 @@ then
     --enable-runtime-cpu-detect
   make $MAKEFLAGS
   strip vpxenc
-  cp -f vpxenc ..
-  cd ..
+  cp -f vpxenc "$base_dir"
+  cd "$base_dir"
 
   cat <<EOL >vpxenc-sources.txt
 https://chromium.googlesource.com/webm/libvpx
@@ -608,6 +633,7 @@ fi
 ### slow builds ###
 if echo "$args" | grep -q -i -w -E 'all|xvid'
 then
+   cd "$base_dir"
    mkdir build
    cd build
    git clone https://github.com/m-ab-s/xvid.git
@@ -618,14 +644,15 @@ then
    cd ../../examples
    make $MAKEFLAGS
    strip xvid_encraw
-   cp -f xvid_encraw  ../../../../../
-   cd ../../../../../
+   cp -f xvid_encraw "$base_dir"
+   cd "$base_dir"
    rm -rf build
 fi
 
 ### rav1e
 if echo "$args" | grep -q -i -w -E 'all|rav1e'
 then
+  cd "$base_dir"
   git clone --depth 1 https://github.com/xiph/rav1e build
   cd build
 
@@ -638,9 +665,8 @@ then
   build_nasm
   PATH="$PWD:$PATH" "$HOME/.cargo/bin/cargo" build --release
   strip target/release/rav1e
-  cp -f target/release/rav1e ..
-  cd ..
-
+  cp -f target/release/rav1e "$base_dir"
+  cd "$base_dir"
   cat <<EOL >rav1e-sources.txt
 https://github.com/xiph/rav1e
 $(git -C build rev-parse HEAD)
@@ -657,9 +683,8 @@ then
   cmake .. -DCMAKE_BUILD_TYPE=Release -DCONFIG_SHARED=0
   make $MAKEFLAGS aomenc
   strip aomenc
-  cp -f aomenc ../..
-  cd ../..
-
+  cp -f aomenc "$base_dir"
+  cd "$base_dir"
   cat <<EOL >aomenc-sources.txt
 https://aomedia.googlesource.com/aom
 $(git -C build rev-parse HEAD)
@@ -670,6 +695,7 @@ fi
 ### mediainfo
 if echo "$args" | grep -q -i -w -E 'all|mediainfo'
 then
+  cd "$base_dir"
   mkdir build
   cd build
   ver=$(wget -q -O - "https://mediaarea.net/en/MediaInfo/Download/Source" | \
@@ -680,14 +706,15 @@ then
   cd MediaInfo_CLI_GNU_FromSource
   ./CLI_Compile.sh
   strip MediaInfo/Project/GNU/CLI/mediainfo
-  cp -f MediaInfo/Project/GNU/CLI/mediainfo ../..
-  cd ../..
+  cp -f MediaInfo/Project/GNU/CLI/mediainfo "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### x265
 if echo "$args" | grep -q -i -w -E 'all|x265'
 then
+  cd "$base_dir"
   rm -rf x265
   git clone https://bitbucket.org/multicoreware/x265_git.git x265
   mv x265 build
@@ -731,14 +758,15 @@ then
     -DLINKED_10BIT=ON \
     -DLINKED_12BIT=ON
   make $MAKEFLAGS
-  cp -f x265 ../../..
-  cd ../../..
+  cp -f x265 "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ### d2vwitch
 if echo "$args" | grep -q -i -w -E 'all|d2vwitch'
 then
+  cd "$base_dir"
   mkdir build
   cd build
 
@@ -778,10 +806,10 @@ then
   ./configure
   make $MAKEFLAGS
   strip d2vwitch
-  cp -f d2vwitch ../..
-  cd ..
+  cp -f d2vwitch "$base_dir"
+  cd  "$base_dir"
 
-  cat <<EOL >../d2vwitch-sources.txt
+  cat <<EOL >d2vwitch-sources.txt
 https://github.com/dubhater/D2VWitch
 $(git -C D2VWitch rev-parse HEAD)
 
@@ -791,14 +819,14 @@ $(git -C FFmpeg rev-parse HEAD)
 https://github.com/vapoursynth/vapoursynth
 $(git -C vapoursynth rev-parse HEAD)
 EOL
-
-  cd ..
+  cd "$base_dir"
   rm -rf build
 fi
 
 ## ffmsindex
 if echo "$args" | grep -q -i -w -E 'all|ffmsindex'
 then
+  cd "$base_dir"
   mkdir build
   cd build
 
@@ -833,23 +861,22 @@ then
   LDFLAGS="-Wl,--gc-sections" ./configure --disable-shared
   make $MAKEFLAGS
   strip src/index/ffmsindex
-  cp -f src/index/ffmsindex ../..
-  cd ..
-
-  cat <<EOL >../ffmsindex-sources.txt
+  cp -f src/index/ffmsindex "$base_dir"
+  cd "$base_dir"
+  cat <<EOL >ffmsindex-sources.txt
 https://github.com/FFMS/ffms2
 $(git -C ffms2 rev-parse HEAD)
 
 https://github.com/FFmpeg/FFmpeg
 $(git -C FFmpeg rev-parse HEAD)
 EOL
-
-  cd ..
   rm -rf build
 fi
+
 ### x264
 if echo "$args" | grep -q -i -w -E 'all|x264'
 then
+  cd "$base_dir"
   mkdir build
   cd build
   top="$PWD"
@@ -894,10 +921,9 @@ then
   cd ../x264
   ./configure --enable-strip --disable-gpac --extra-ldflags="$(pkg-config --static --libs ffms2) -Wl,--gc-sections"
   make $MAKEFLAGS
-  cp -f x264 ../..
-  cd ..
-
-  cat <<EOL >../x264-sources.txt
+  cp -f x264 $base_dor
+  cd "$base_dir"
+  cat <<EOL >/x264-sources.txt
 https://code.videolan.org/videolan/x264.git
 $(git -C x264 rev-parse HEAD)
 
@@ -910,29 +936,13 @@ $(git -C ffms2 rev-parse HEAD)
 https://github.com/FFmpeg/FFmpeg
 $(git -C FFmpeg rev-parse HEAD)
 EOL
-
-  cd ..
-  rm -rf build
-fi
-
-### mplayer / mencoder
-if echo "$args" | grep -q -i -w -E 'all|mencoder|mplayer'
-then
-  svn checkout svn://svn.mplayerhq.hu/mplayer/trunk build
-  cd build
-  #git clone --depth 1 --branch n5.1.4 https://git.ffmpeg.org/ffmpeg.git ffmpeg
-  git clone --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
-  ./configure --disable-relocatable --enable-runtime-cpudetection
-  make $MAKEFLAGS
-  strip mencoder mplayer
-  cp -f mencoder mplayer ..
-  cd ..
   rm -rf build
 fi
 
 ### mkvtoolnix
 if echo "$args" | grep -q -i -w -E 'all|mkvmerge|mkvextract|mkvinfo|mkvtoolnix'
 then
+  cd "$base_dir"
  ## 39+ requires  gcc-7 and boostlib 1.60+
 #  git clone --single-branch --branch release-51.0.0 https://gitlab.com/mbunkus/mkvtoolnix.git build
 #  git clone https://gitlab.com/mbunkus/mkvtoolnix.git build
@@ -946,14 +956,15 @@ then
   ./configure --disable-qt --enable-appimage
   rake $MAKEFLAGS
   strip src/{mkvextract,mkvinfo,mkvmerge}
-  cp -f src/{mkvextract,mkvinfo,mkvmerge} ..
-  cd ..
+  cp -f src/{mkvextract,mkvinfo,mkvmerge} "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ## SVT HEVC
 if echo "$args" | grep -q -i -w -E 'all|svthevc'
 then
+  cd "$base_dir"
   git clone https://github.com/OpenVisualCloud/SVT-HEVC.git build
   mkdir -p build/build
   cd build/build
@@ -961,14 +972,15 @@ then
   make $MAKEFLAGS
   echo "$PWD"
   strip ../Bin/Release/SvtHevcEncApp
-  cp -f ../Bin/Release/SvtHevcEncApp ../..
-  cd ../..
+  cp -f ../Bin/Release/SvtHevcEncApp "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
 ## SVT-AV1
 if echo "$args" | grep -q -i -w -E 'all|svtav1'
 then
+  cd "$base_dir"
   git clone https://gitlab.com/AOMediaCodec/SVT-AV1.git build
   mkdir -p build/build
   cd build/build
@@ -976,8 +988,8 @@ then
   make $MAKEFLAGS
   echo "$PWD"
   strip ../Bin/Release/SvtAv1EncApp
-  cp -f ../Bin/Release/SvtAv1EncApp ../..
-  cd ../..
+  cp -f ../Bin/Release/SvtAv1EncApp "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
@@ -986,6 +998,7 @@ fi
 ### ffmpeg
 if echo "$args" | grep -q -i -w -E 'all|ffmpeg'
 then
+  cd "$base_dir"
   mkdir build
   cd build
 
@@ -993,7 +1006,7 @@ then
   export PATH="$top:$PATH"
   export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig"
 
-  git clone --depth 1 --branch release/6.1 https://github.com/FFmpeg/FFmpeg ffmpeg-src
+  git clone --depth 1 --branch release/7.1 https://github.com/FFmpeg/FFmpeg ffmpeg-src
   git clone --depth 1 https://github.com/fribidi/fribidi
   git clone --depth 1 https://github.com/harfbuzz/harfbuzz
   cd harfbuzz
@@ -1122,12 +1135,12 @@ EOF
     --enable-libpulse \
     --disable-libjack
   make $MAKEFLAGS
-  cp ffmpeg "$top/.."
+  cp ffmpeg cd "$base_dir"
 
-  cd "$top"
-  cat <<EOL >../ffmpeg-sources.txt
+  cd "$base_dir"
+  cat <<EOL >ffmpeg-sources.txt
 https://github.com/FFmpeg/FFmpeg
-$(git --branch release/6.1 -C ffmpeg-src rev-parse HEAD)
+$(git --branch release/7.1 -C ffmpeg-src rev-parse HEAD)
 
 https://github.com/fribidi/fribidi
 $(git -C fribidi rev-parse HEAD)
@@ -1189,9 +1202,25 @@ revision $(svn info lame | grep '^Revision:' | cut -d' ' -f2)
 https://bitbucket.org/multicoreware/x265
 $(cat x265/.hg_archival.txt)
 EOL
-
-  cd ..
+  cd "$base_dir"
   rm -rf build
 
   exit 0
 fi
+
+# mplayer / mencoder
+#if echo "$args" | grep -q -i -w -E 'all|mencoder|mplayer'
+if echo "$args" | grep -q -i -w -E 'mencoder|mplayer'
+then
+  svn checkout svn://svn.mplayerhq.hu/mplayer/trunk build
+  cd build
+  git clone --depth 1 --branch release/7.1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
+  #git clone --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
+  ./configure --disable-relocatable --enable-runtime-cpudetection
+  make $MAKEFLAGS
+  strip mencoder mplayer
+  cp -f mencoder mplayer ..
+  cd ..
+  rm -rf build
+fi
+
