@@ -252,7 +252,7 @@ fi
 ### lsdvd
 if echo "$args" | grep -q -i -w -E 'all|lsdvd'
 then
-  echo "building lsDVD,..."
+  echo "building lsdvd,..."
   cd "$base_dir"
   git clone --depth 1 https://git.code.sf.net/p/lsdvd/git build
   cd build
@@ -394,7 +394,7 @@ then
   make $MAKEFLAGS
   strip src/sox
   cp -f src/sox "$base_dir"
-    cd "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
@@ -609,7 +609,7 @@ fi
 ### mp4fpsmod
 if echo "$args" | grep -q -i -w -E 'all|mp4fpsmod'
 then
-  echo "building MP$FPSmod,..."
+  echo "building MP4FPSmod,..."
   cd "$base_dir"
   git clone --depth 1 https://github.com/nu774/mp4fpsmod build
   cd build
@@ -656,8 +656,8 @@ fi
 ### slow builds ###
 if echo "$args" | grep -q -i -w -E 'all|xvid'
 then
-  echo "building XviD,..."
-  cd "$base_dir"
+   echo "building XviD,..."
+   cd "$base_dir"
    mkdir build
    cd build
    git clone --depth 1 https://github.com/m-ab-s/xvid.git
@@ -692,7 +692,6 @@ then
   strip target/release/rav1e
   cp -f target/release/rav1e "$base_dir"
   cd "$base_dir"
-
   cat <<EOL >rav1e-sources.txt
 https://github.com/xiph/rav1e
 $(git -C build rev-parse HEAD)
@@ -713,7 +712,6 @@ then
   strip aomenc
   cp -f aomenc "$base_dir"
   cd "$base_dir"
-
   cat <<EOL >aomenc-sources.txt
 https://aomedia.googlesource.com/aom
 $(git -C build rev-parse HEAD)
@@ -851,6 +849,7 @@ $(git -C FFmpeg rev-parse HEAD)
 https://github.com/vapoursynth/vapoursynth
 $(git -C vapoursynth rev-parse HEAD)
 EOL
+  cd "$base_dir"
   rm -rf build
 fi
 
@@ -903,10 +902,9 @@ $(git -C ffms2 rev-parse HEAD)
 https://github.com/FFmpeg/FFmpeg
 $(git -C FFmpeg rev-parse HEAD)
 EOL
-
-  cd ..
   rm -rf build
 fi
+
 ### x264
 if echo "$args" | grep -q -i -w -E 'all|x264'
 then
@@ -958,8 +956,10 @@ then
   make $MAKEFLAGS
   cp -f x264 "$base_dir"
   cd "$base_dir"
-
-  cat <<EOL >../x264-sources.txt
+  cat <<EOL >/x264-sources.txt
+  cp -f x264 "$base_dir"
+  cd "$base_dir"
+  cat <<EOL >/x264-sources.txt
 https://code.videolan.org/videolan/x264.git
 $(git -C x264 rev-parse HEAD)
 
@@ -972,8 +972,6 @@ $(git -C ffms2 rev-parse HEAD)
 https://github.com/FFmpeg/FFmpeg
 $(git -C FFmpeg rev-parse HEAD)
 EOL
-
-  cd ..
   rm -rf build
 fi
 
@@ -981,9 +979,7 @@ fi
 if echo "$args" | grep -q -i -w -E 'all|mkvmerge|mkvextract|mkvinfo|mkvtoolnix'
 then
   echo "building MKVToolnix,..."
- ## 39+ requires  gcc-7 and boostlib 1.60+
-#  git clone --single-branch --branch release-51.0.0 https://gitlab.com/mbunkus/mkvtoolnix.git build
-#  git clone --depth 1 https://gitlab.com/mbunkus/mkvtoolnix.git build
+  cd "$base_dir"
   git clone --depth 1 https://codeberg.org/mbunkus/mkvtoolnix.git build
   cd build
   git checkout $(git tag --list | sort -V | tail -1)
@@ -994,8 +990,8 @@ then
   ./configure --disable-qt --enable-appimage
   rake $MAKEFLAGS
   strip src/{mkvextract,mkvinfo,mkvmerge}
-  cp -f src/{mkvextract,mkvinfo,mkvmerge} ..
-  cd ..
+  cp -f src/{mkvextract,mkvinfo,mkvmerge} "$base_dir"
+  cd "$base_dir"
   rm -rf build
 fi
 
@@ -1261,4 +1257,3 @@ then
   cd ..
   rm -rf build
 fi
-
