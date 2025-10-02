@@ -17,22 +17,72 @@ build_nasm () {
   rm -rf nasm-$ver nasm-${ver}.tar.xz
 }
 
-build_ffdep () {
-  echo "building $1 for FFmpeg,..."
-  cd $1
-  if [ ! -x configure ] && [ -x autogen.sh ]; then
-    ./autogen.sh || true
-  fi
-  if [ ! -x configure ]; then
-    autoreconf -if
-  fi
-  PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
-  CPPFLAGS="-I$PWD/../libs/include" \
-    ./configure --prefix="$PWD/../libs" --disable-shared --enable-static $2
-  make $MAKEFLAGS
-  make install
-  cd ..
+build_ffdep() {
+    local dep="$1"
+    local buildsystem="${2:-meson}"
+    local extra="${3:-}"
+
+    echo "=== Building dependency: $dep (buildsystem=$buildsystem) ==="
+    cd "$dep" || return 1
+
+    # Default-Install-Pfad
+    : "${TARGET:=$top/libs}"
+
+    case "$buildsystem" in
+        meson)
+            # Meson akzeptiert nur --prefix, nicht -Dprefix
+            meson setup build --prefix="$TARGET" $extra
+            ninja -C build install
+            ;;
+        cmake)
+            cmake -B build -DCMAKE_INSTALL_PREFIX="$TARGET" $extra
+            cmake --build build -j"$(nproc)"
+            cmake --install build
+            ;;
+        autotools)
+            if [ ! -f configure ]; then
+                if [ -f autogen.sh ]; then
+                    ./autogen.sh
+                else
+                    autoreconf -i
+                fi
+            fi
+            ./configure --prefix="$TARGET" $extra
+            make $MAKEFLAGS
+            make install
+            ;;
+        none)
+            if [ -f meson.build ]; then
+                meson setup build --prefix="$TARGET" $extra
+                ninja -C build install
+            elif [ -f CMakeLists.txt ]; then
+                cmake -B build -DCMAKE_INSTALL_PREFIX="$TARGET" $extra
+                cmake --build build -j"$(nproc)"
+                cmake --install build
+            elif [ -f configure ] || [ -f autogen.sh ]; then
+                [ -f autogen.sh ] && ./autogen.sh || autoreconf -if
+                ./configure --prefix="$TARGET" --disable-shared --enable-static $extra
+                make $MAKEFLAGS
+                make install
+            else
+                echo "Unknown project type: $dep"
+                cd ..
+                return 1
+            fi
+            ;;
+        *)
+            echo "Unknown buildsystem: $buildsystem"
+            cd ..
+            return 1
+            ;;
+    esac
+
+    cd ..
 }
+
+
+
+
 
 set -e
 set -x
@@ -1030,17 +1080,17 @@ then
 fi
 
 ### ffmpeg
-if echo "$args" | grep -q -i -w -E 'all|ffmpeg'
-then
+if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   echo "building FFmpeg,..."
   cd "$base_dir"
-  mkdir build
+  mkdir -p build
   cd build
 
   top="$PWD"
   export PATH="$top:$PATH"
-  export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig"
+  export PKG_CONFIG_PATH="$LIBS/lib/pkgconfig:$PKG_CONFIG_PATH"
 
+  # Clone sources
   git clone --depth 1 --branch release/7.1 https://github.com/FFmpeg/FFmpeg ffmpeg-src
   git clone --depth 1 https://github.com/fribidi/fribidi
   git clone --depth 1 https://github.com/harfbuzz/harfbuzz
@@ -1065,68 +1115,185 @@ then
   git clone --depth 1 https://github.com/xiph/libopusenc
   git clone --depth 1 https://github.com/xiph/opusfile
   svn checkout https://svn.code.sf.net/p/lame/svn/trunk/lame
-
-
   git clone --depth 1 https://bitbucket.org/multicoreware/x265_git.git x265
-  #wget -O x265.tar.bz2 https://bitbucket.org/multicoreware/x265/get/tip.tar.bz2
-  #tar xf x265.tar.bz2
-  #mv multicoreware-x265-*/ x265
 
+  # Build tools
   build_nasm
 
+  # --- FFmpeg Dependencies ---
+
+  # Fribidi (Meson)
   old_mkflags="$MAKEFLAGS"; MAKEFLAGS="-j1"
-  build_ffdep fribidi
+  build_ffdep fribidi meson "-Ddocs=false"
   MAKEFLAGS="$old_mkflags"
-  ls
 
-  cd harfbuzz && ls && ./autogen.sh && cd .. && ls
-  build_ffdep harfbuzz "--with-glib=no"
+  # Harfbuzz (Autotools)
+  build_ffdep harfbuzz autotools "--with-glib=no"
 
+  # libbluray (Meson)
   cd libbluray && git submodule init && git submodule update && cd ..
-  build_ffdep libbluray "--disable-bdjava-jar --disable-doxygen-doc"
+  build_ffdep libbluray meson "-Dbdj_jar=disabled -Denable_docs=false"
 
-  build_ffdep kvazaar
-  build_ffdep libass
-  build_ffdep ogg
-  build_ffdep flac
-  build_ffdep vorbis
-  build_ffdep theora
-  build_ffdep opus
-  build_ffdep libopusenc "--disable-doc --disable-examples"
-  build_ffdep opusfile "--disable-doc --disable-examples --disable-http"
-  build_ffdep libwebp
-  build_ffdep libvpx "--enable-vp9-highbitdepth --disable-unit-tests --disable-examples --disable-tools --disable-docs"
-  build_ffdep lame "--disable-gtktest --disable-decoder --disable-frontend"
-  build_ffdep opencore-amr
-  build_ffdep vo-amrwbenc
-  make -C nv-codec-headers install PREFIX="$top/libs"
+  # kvazaar (Autotools)
+  build_ffdep kvazaar autotools ""
 
+  # libass (Autotools)
+  build_ffdep libass autotools ""
+
+  # Ogg (Autotools)
+  build_ffdep ogg autotools ""
+
+  # FLAC (Autotools)
+  build_ffdep flac autotools ""
+
+  # Vorbis (Autotools)
+  build_ffdep vorbis autotools ""
+
+  # Theora (Autotools)
+  build_ffdep theora autotools ""
+
+  # --- Opus (Autotools) ---
+  cd opus
+  git fetch --tags
+  opus_ver=$(git describe --tags --abbrev=0 2>/dev/null || git rev-parse --short HEAD)
+  ./autogen.sh
+  ./configure --prefix="$PWD/.." --disable-shared --disable-doc --disable-extra-programs
+  make $MAKEFLAGS
+  make install
+
+  # Update opus.pc Version dynamisch
+  pc_file="../libs/lib/pkgconfig/opus.pc"
+  if [ -f "$pc_file" ]; then
+      sed -i "s/^Version: .*/Version: $opus_ver/" "$pc_file"
+  fi
+
+  # Export PKG_CONFIG_PATH damit libopusenc opus findet
+  export PKG_CONFIG_PATH="$PWD/../libs/lib/pkgconfig:$PKG_CONFIG_PATH"
+  echo "opus version found by pkg-config: $(pkg-config --modversion opus)"
+
+  cd ../libopusenc
+  ./autogen.sh
+  PKG_CONFIG_PATH="$PWD/../libs/lib/pkgconfig" \
+  ./configure --prefix="$PWD/.." --disable-shared --disable-doc --disable-examples CFLAGS=-fPIC
+  make $MAKEFLAGS
+  make install
+
+  # libwebp (Autotools)
+  cd "$top/libwebp" || exit 1  # kein extra /build
+
+  # Configure mit lokalem Prefix
+  ./autogen.sh
+  ./configure --prefix="$top/libs" --disable-shared
+  make $MAKEFLAGS
+  make install
+
+  # Sicherstellen, dass pkg-config libwebp findet
+  export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+  # Zurück zum Build-Ordner
+  cd "$top" || exit 1
+
+
+  # libvpx (Autotools)
+  build_ffdep libvpx autotools "--enable-vp9-highbitdepth --disable-unit-tests --disable-examples --disable-tools --disable-docs"
+
+  # LAME (Autotools)
+  build_ffdep lame autotools "--disable-gtktest --disable-decoder --disable-frontend"
+
+  # opencore-amr (Autotools)
+  build_ffdep opencore-amr autotools ""
+
+  # vo-amrwbenc (Autotools)
+  build_ffdep vo-amrwbenc autotools ""
+
+  # nv-codec-headers "installieren" ohne make install
+  mkdir -p "$top/libs/include"
+  cp -r nv-codec-headers/include/ffnvcodec "$top/libs/include/"
+  # --- x264 build ---
   cd "$top/x264"
+
+  # Configure mit lokalem Prefix, statisch, keine CLI
   ./configure \
     --prefix="$top/libs" \
-    --disable-cli \
     --enable-static \
+    --disable-shared \
+    --disable-cli \
     --disable-swscale \
     --disable-lavf \
     --disable-ffms \
     --disable-gpac \
     --disable-lsmash
-  make $MAKEFLAGS
-  make install
 
+  make $MAKEFLAGS
+  make install  # erzeugt auch die x264.pc in $top/libs/lib/pkgconfig
+
+  # PKG_CONFIG_PATH updaten, damit FFmpeg x264 findet
+  export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+  # Optional: prüfen, ob pkg-config x264 findet
+  echo "x264 version found by pkg-config: $(pkg-config --modversion x264 2>/dev/null || echo 'not found')"
+
+    # --- x265 build ---
   cd "$top/x265/build/linux"
+
+  # Multilib-Build (8/10/12bit in einem Rutsch)
   MAKEFLAGS="$MAKEFLAGS" ./multilib.sh
-  cp -f 8bit/libx265.a "$top/libs/lib"
-  cp -f "$top/x265/source/x265.h" 8bit/x265_config.h "$top/libs/include"
-  cat <<EOF >"$top/libs/lib/pkgconfig/x265.pc"
-Name: x265
-Description: H.265/HEVC video encoder
-Version: 0
-Libs: -L"$top/libs/lib" -lx265
-Libs.private: -lstdc++ -lm -lrt -ldl -lnuma
-Cflags: -I"$top/libs/include"
+
+  # Libraries zusammenführen (libx265_main, libx265_main10, libx265_main12 → libx265.a)
+  cd 8bit
+  ar -M <<EOF
+CREATE libx265.a
+ADDLIB libx265.a
+ADDLIB ../10bit/libx265.a
+ADDLIB ../12bit/libx265.a
+SAVE
+END
 EOF
 
+  # Installieren nach $top/libs
+  cp -f libx265.a "$top/libs/lib"
+  cp -f "$top/x265/source/x265.h" "$top/x265/build/linux/8bit/x265_config.h" "$top/libs/include"
+
+  # pkg-config-Datei erzeugen
+  mkdir -p "$top/libs/lib/pkgconfig"
+
+  # Version robust ermitteln
+  x265_version=$(grep -Po '(?<=set\(X265_VERSION ).*' "$top/x265/source/CMakeLists.txt" 2>/dev/null | tr -d ')')
+  if [ -z "$x265_version" ]; then
+      # Fallback: aus x265.h
+      x265_version=$(grep -Po '(?<=#define X265_BUILD\s)[0-9]+' "$top/x265/source/x265.h" 2>/dev/null || echo "unknown")
+  fi
+
+  cat <<EOF >"$top/libs/lib/pkgconfig/x265.pc"
+prefix=$top/libs
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+
+Name: x265
+Description: H.265/HEVC video encoder (8bit/10bit/12bit combined)
+Version: $x265_version
+Libs: -L\${libdir} -lx265 -lstdc++ -lm -lrt -ldl -lnuma
+Cflags: -I\${includedir}
+EOF
+
+  # PKG_CONFIG_PATH updaten
+  export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+  # Test, ob pkg-config x265 findet
+  echo "x265 version found by pkg-config: \$(pkg-config --modversion x265 2>/dev/null || echo 'not found')"
+
+  # NVENC/CUVID nur aktivieren, wenn die NVIDIA Libs vorhanden sind
+  if [ -d "/usr/local/cuda/include" ] && [ -d "/usr/local/cuda/lib64" ]; then
+      nvflags="--enable-ffnvcodec --enable-nvdec --enable-nvenc --enable-cuvid"
+      extra_ldflags="-L/usr/local/cuda/lib64"
+  else
+      echo "NVIDIA CUDA libs nicht gefunden, CUVID/NVENC deaktiviert"
+      nvflags=""
+      extra_ldflags=""
+  fi
+
+  # FFmpeg build
   cd "$top/ffmpeg-src"
   ./configure \
     --disable-debug \
@@ -1139,6 +1306,7 @@ EOF
     --disable-ffplay \
     --disable-ffprobe \
     --disable-doc \
+    $nvflags \
     --enable-libass \
     --enable-libbluray \
     --enable-libfontconfig \
@@ -1156,10 +1324,6 @@ EOF
     --enable-libx264 \
     --enable-libx265 \
     --enable-libkvazaar \
-    --enable-ffnvcodec \
-    --enable-nvdec \
-    --enable-nvenc \
-    --enable-cuvid \
     --enable-libxcb \
     --enable-libxcb-shm \
     --enable-libxcb-xfixes \
@@ -1172,6 +1336,7 @@ EOF
   make $MAKEFLAGS
   cp ffmpeg "$base_dir"
 
+  # Versions-Log
   cd "$base_dir"
   cat <<EOL >ffmpeg-sources.txt
 https://github.com/FFmpeg/FFmpeg
