@@ -10,7 +10,6 @@ aften
 aomenc
 faac
 ffdcaenc
-ffmbc
 ffmpeg
 ffmsindex
 flac

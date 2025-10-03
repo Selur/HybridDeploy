@@ -855,7 +855,7 @@ then
   export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig"
 
   git clone --depth 1 https://github.com/dubhater/D2VWitch
-  git clone --depth 1 --branch release/7.1 https://github.com/FFmpeg/FFmpeg
+  git clone --depth 1 --branch release/6.1 https://github.com/FFmpeg/FFmpeg
   git clone --depth 1 https://github.com/vapoursynth/vapoursynth
 
   build_nasm
@@ -891,13 +891,13 @@ then
 
   cat <<EOL >d2vwitch-sources.txt
 https://github.com/dubhater/D2VWitch
-$(git -C D2VWitch rev-parse HEAD)
+$(git -C build/D2VWitch rev-parse HEAD)
 
 https://github.com/FFmpeg/FFmpeg
-$(git -C FFmpeg rev-parse HEAD)
+$(git -C build/FFmpeg rev-parse HEAD)
 
 https://github.com/vapoursynth/vapoursynth
-$(git -C vapoursynth rev-parse HEAD)
+$(git -C build/vapoursynth rev-parse HEAD)
 EOL
   cd "$base_dir"
   rm -rf build
@@ -1340,67 +1340,67 @@ EOF
   cd "$base_dir"
   cat <<EOL >ffmpeg-sources.txt
 https://github.com/FFmpeg/FFmpeg
-$(git --branch release/7.1 -C ffmpeg-src rev-parse HEAD)
+$(git -C build/ffmpeg-src rev-parse HEAD)
 
 https://github.com/fribidi/fribidi
-$(git -C fribidi rev-parse HEAD)
+$(git -C build/fribidi rev-parse HEAD)
 
 https://github.com/harfbuzz/harfbuzz
-$(git -C harfbuzz rev-parse HEAD)
+$(git -C build/harfbuzz rev-parse HEAD)
 
 https://github.com/ultravideo/kvazaar
-$(git -C kvazaar rev-parse HEAD)
+$(git -C build/kvazaar rev-parse HEAD)
 
 https://github.com/libass/libass
-$(git -C libass rev-parse HEAD)
+$(git -C build/libass rev-parse HEAD)
 
 https://code.videolan.org/videolan/libbluray.git
-$(git -C libbluray rev-parse HEAD)
+$(git -C build/libbluray rev-parse HEAD)
 
 https://github.com/xiph/ogg
-$(git -C ogg rev-parse HEAD)
+$(git -C build/ogg rev-parse HEAD)
 
 https://github.com/xiph/vorbis
-$(git -C vorbis rev-parse HEAD)
+$(git -C build/vorbis rev-parse HEAD)
 
 https://github.com/xiph/theora
-$(git -C theora rev-parse HEAD)
+$(git -C build/theora rev-parse HEAD)
 
 https://github.com/xiph/flac
-$(git -C flac rev-parse HEAD)
+$(git -C build/flac rev-parse HEAD)
 
 https://chromium.googlesource.com/webm/libvpx
-$(git -C libvpx rev-parse HEAD)
+$(git -C build/libvpx rev-parse HEAD)
 
 https://chromium.googlesource.com/webm/libwebp
-$(git -C libwebp rev-parse HEAD)
+$(git -C build/libwebp rev-parse HEAD)
 
 https://code.videolan.org/videolan/x264.git
-$(git -C x264 rev-parse HEAD)
+$(git -C build/x264 rev-parse HEAD)
 
 https://github.com/FFmpeg/nv-codec-headers
-$(git -C nv-codec-headers rev-parse HEAD)
+$(git -C build/nv-codec-headers rev-parse HEAD)
 
 opencore-amr: https://git.code.sf.net/p/opencore-amr/code
-$(git -C opencore-amr rev-parse HEAD)
+$(git -C build/opencore-amr rev-parse HEAD)
 
 https://git.code.sf.net/p/opencore-amr/vo-amrwbenc
-$(git -C vo-amrwbenc rev-parse HEAD)
+$(git -C build/vo-amrwbenc rev-parse HEAD)
 
 git clone --depth 1 https://github.com/xiph/opus
-$(git -C opus rev-parse HEAD)
+$(git -C build/opus rev-parse HEAD)
 
 https://github.com/xiph/libopusenc
-$(git -C libopusenc rev-parse HEAD)
+$(git -C build/libopusenc rev-parse HEAD)
 
 https://github.com/xiph/opusfile
-$(git -C opusfile rev-parse HEAD)
+$(git -C build/opusfile rev-parse HEAD)
 
 https://svn.code.sf.net/p/lame/svn/trunk/lame
-revision $(svn info lame | grep '^Revision:' | cut -d' ' -f2)
+revision $(svn info build/lame | grep '^Revision:' | cut -d' ' -f2)
 
 https://bitbucket.org/multicoreware/x265
-$(cat x265/.hg_archival.txt)
+$(git -c build/x265 rev-parse HEAD)
 EOL
   cd "$base_dir"
   rm -rf build
