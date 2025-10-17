@@ -80,10 +80,6 @@ build_ffdep() {
     cd ..
 }
 
-
-
-
-
 set -e
 set -x
 
@@ -164,7 +160,6 @@ fi
 mkdir -p tools
 cd tools
 
-
 ### downloads only ###
 
 ### DivX265
@@ -172,6 +167,7 @@ if echo "$args" | grep -q -i -w -E 'all|divx265'
 then
   echo "Downloading DivX265,..."
   cd "$base_dir"
+  rm -rf build
   mkdir build
   cd build
   wget -O DivX265 http://download.divx.com/hevc/DivX265_1_5_8
@@ -186,6 +182,7 @@ if echo "$args" | grep -q -i -w -E 'all|neroaac|neroaacenc'
 then
   echo "Downloading NeroAAC,..."
   cd "$base_dir"
+  rm -rf build
   mkdir build
   cd build
   url="https://www.videohelp.com/download/NeroAACCodec-1.5.4.zip"
@@ -204,6 +201,7 @@ if echo "$args" | grep -q -i -w -E 'all|tsmuxer'
 then
   echo "building tsMuxeR,..."
   cd "$base_dir"
+  rm -rf build
   mkdir build
   cd build
   git clone --depth 1 https://github.com/justdan96/tsMuxer
@@ -222,11 +220,12 @@ if echo "$args" | grep -q -i -w -E 'all|telxcc'
 then
   echo "building telxcc,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/kanongil/telxcc build
   gcc -O3 build/telxcc.c -o telxcc -s
   cat <<EOL >telxcc-sources.txt
 https://github.com/kanongil/telxcc
-$(git -C build rev-parse HEAD)
+$(cd build && git rev-parse HEAD)
 EOL
   rm -rf build
 fi
@@ -236,6 +235,7 @@ if echo "$args" | grep -q -i -w -E 'all|flvextract|flvextractcl'
 then
   echo "building FLVExtractCL,..."
   cd "$base_dir"
+  rm -rf build
   mkdir build
   cd build
   wget http://www.moitah.net/download/latest/FLVExtractCL_cpp.zip
@@ -252,6 +252,7 @@ if echo "$args" | grep -q -i -w -E 'all|framecounter'
 then
   echo "building FrameCounter,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/Selur/FrameCounter build
   cd build
   qmake6
@@ -267,6 +268,7 @@ if echo "$args" | grep -q -i -w -E 'all|idxsubcutter'
 then
   echo "building IdxSubCutter,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/Selur/IdxSubCutter build
   cd build
   qmake6
@@ -282,6 +284,7 @@ if echo "$args" | grep -q -i -w -E 'all|vsviewer'
 then
   echo "building vsViewer,..."
   cd "$base_dir"
+  rm -rf build
   git clone https://github.com/Selur/vsViewer build
   cd build
   git clone https://github.com/vapoursynth/vapoursynth vapoursynth-git
@@ -304,6 +307,7 @@ if echo "$args" | grep -q -i -w -E 'all|lsdvd'
 then
   echo "building lsdvd,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://git.code.sf.net/p/lsdvd/git build
   cd build
   autoreconf -if
@@ -314,7 +318,7 @@ then
   cd "$base_dir"
   cat <<EOL >lsdvd-sources.txt
 https://git.code.sf.net/p/lsdvd/git
-$(git -C build rev-parse HEAD)
+$(cd build && git rev-parse HEAD)
 EOL
   rm -rf build
 fi
@@ -324,6 +328,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffdcaenc|dcaenc'
 then
   echo "building ffdcaenc,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/filler56789/ffdcaenc-2 build
   cd build
   autoreconf -if
@@ -334,7 +339,7 @@ then
   cd "$base_dir"
   cat <<EOL >ffdcaenc-sources.txt
 https://github.com/filler56789/ffdcaenc-2
-$(git -C build rev-parse HEAD)
+$(cd build && git rev-parse HEAD)
 EOL
   rm -rf build
 fi
@@ -344,6 +349,7 @@ if echo "$args" | grep -q -i -w -E 'all|kvazaar'
 then
   echo "building Kvazaar,..."
   cd "$base_dir"
+  rm -rf build
   git clone https://github.com/ultravideo/kvazaar build
   cd build
   git checkout $(git tag --list | sort -V | grep -v rc | tail -1)
@@ -361,14 +367,21 @@ if echo "$args" | grep -q -i -w -E 'all|lame'
 then
   echo "building Lame,..."
   cd "$base_dir"
+  rm -rf build
   mkdir build
   cd build
+  # Fix version extraction to use a working approach
   ver=$(wget -q -O- 'https://sourceforge.net/p/lame/svn/HEAD/tree/tags' | \
     grep RELEASE_ | \
-    sed -n 's,.*RELEASE__\([0-9_][^<]*\)<.*,\1,p' | \
+    sed -n 's,.*RELEASE__$[0-9_][^<]*$<.*,\1,p' | \
     tr '_' '.' | \
     sort -V | \
     tail -1)
+  # If version extraction fails, use a fallback
+  if [ -z "$ver" ]; then
+    ver="3.100"
+  fi
+  echo "Using Lame version: $ver"
   wget https://sourceforge.net/projects/lame/files/lame/$ver/lame-${ver}.tar.gz
   tar xf lame-${ver}.tar.gz
   cd lame-${ver}
@@ -385,6 +398,7 @@ if echo "$args" | grep -q -i -w -E 'all|faac'
 then
   echo "building FAAC,..."
   cd "$base_dir"
+  rm -rf build
   git clone https://github.com/knik0/faac build
   cd build
   git checkout $(git tag --list | grep '^[1-9]' | sort -V | tail -1)
@@ -402,6 +416,7 @@ if echo "$args" | grep -q -i -w -E 'all|flac'
 then
   echo "building FLAC,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/xiph/flac build
   cd build
   git checkout $(git tag --list | sort -V | tail -1)
@@ -419,6 +434,7 @@ if echo "$args" | grep -q -i -w -E 'all|aften'
 then
   echo "building Aften,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://git.code.sf.net/p/aften/code build
   mkdir -p build/build
   cd build/build
@@ -436,6 +452,7 @@ if echo "$args" | grep -q -i -w -E 'all|sox'
 then
   echo "building SOX,..."
   cd "$base_dir"
+  rm -rf build
   git clone https://git.code.sf.net/p/sox/code build
   cd build
   git checkout $(git tag --list | sort -V | grep -v rc | tail -1)
@@ -453,6 +470,7 @@ if echo "$args" | grep -q -i -w -E 'all|delaycut'
 then
   echo "building DelayCut,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/Selur/delaycut build
   cd build
   git checkout $(git tag --list | sort -V | tail -1)
@@ -464,8 +482,6 @@ then
   rm -rf build
 fi
 
-
-
 ### not so fast builds ###
 
 ### BDSup2SubPlusPlus
@@ -473,6 +489,7 @@ if echo "$args" | grep -q -i -w -E 'all|bdsup2sub++|bdsup2subplusplus|bdsup2sub'
 then
   echo "building BDSub2Sup++,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/Selur/BDSup2SubPlusPlus build
   cd build
   qmake src/bdsup2sub++.pro
@@ -489,6 +506,7 @@ if echo "$args" | grep -q -i -w -E 'all|fdkaac|fdk-aac|aac-enc'
 then
   echo "building FDKAAC,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/nu774/fdkaac.git build
   cd build
   autoreconf -i
@@ -505,6 +523,7 @@ if echo "$args" | grep -q -i -w -E 'all|oggenc'
 then
   echo "building OGGEnc,..."
   cd "$base_dir"
+  rm -rf build
   mkdir build
   cd build
   git clone --depth 1 https://github.com/xiph/ogg
@@ -538,13 +557,13 @@ then
 
   cat <<EOL >oggenc-sources.txt
 https://github.com/xiph/ogg
-$(git -C build/ogg rev-parse HEAD)
+$(cd build/ogg && git rev-parse HEAD)
 
 https://github.com/xiph/vorbis
-$(git -C build/vorbis rev-parse HEAD)
+$(cd build/vorbis && git rev-parse HEAD)
 
 https://github.com/xiph/vorbis-tools
-$(git -C build/vorbis-tools rev-parse HEAD)
+$(cd build/vorbis-tools && git rev-parse HEAD)
 EOL
   rm -rf build
 fi
@@ -554,6 +573,7 @@ if echo "$args" | grep -q -i -w -E 'all|opusenc'
 then
   echo "building OpusEnc,..."
   cd "$base_dir"
+  rm -rf build
   mkdir build
   cd build
   git clone https://github.com/xiph/opus
@@ -612,16 +632,16 @@ then
 
   cat <<EOL >opusenc-sources.txt
 https://github.com/xiph/opus
-$(git -C build/opus rev-parse HEAD)
+$(cd build/opus && git rev-parse HEAD)
 
 https://github.com/xiph/libopusenc
-$(git -C build/libopusenc rev-parse HEAD)
+$(cd build/libopusenc && git rev-parse HEAD)
 
 https://github.com/xiph/opusfile
-$(git -C build/opusfile rev-parse HEAD)
+$(cd build/opusfile && git rev-parse HEAD)
 
 https://github.com/xiph/opus-tools
-$(git -C build/opus-tools rev-parse HEAD)
+$(cd build/opus-tools && git rev-parse HEAD)
 EOL
   rm -rf build
 fi
@@ -631,6 +651,7 @@ if echo "$args" | grep -q -i -w -E 'all|mp4box'
 then
   echo "building MP4Box,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/gpac/gpac build
   cd build
   #git checkout $(git tag --list | sort -V | tail -1)
@@ -661,6 +682,7 @@ if echo "$args" | grep -q -i -w -E 'all|mp4fpsmod'
 then
   echo "building MP4FPSmod,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/nu774/mp4fpsmod build
   cd build
   git checkout $(git tag --list | sort -V | tail -1)
@@ -678,6 +700,7 @@ if echo "$args" | grep -q -i -w -E 'all|vpxenc'
 then
   echo "building VPXEnc,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://chromium.googlesource.com/webm/libvpx build
   cd build
   ./configure \
@@ -696,18 +719,17 @@ then
 
   cat <<EOL >vpxenc-sources.txt
 https://chromium.googlesource.com/webm/libvpx
-$(git -C build rev-parse HEAD)
+$(cd build && git rev-parse HEAD)
 EOL
   rm -rf build
 fi
-
-
 
 ### slow builds ###
 if echo "$args" | grep -q -i -w -E 'all|xvid'
 then
    echo "building XviD,..."
    cd "$base_dir"
+   rm -rf build
    mkdir build
    cd build
    git clone --depth 1 https://github.com/m-ab-s/xvid.git
@@ -728,6 +750,7 @@ if echo "$args" | grep -q -i -w -E 'all|rav1e'
 then
   echo "building rav1e,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/xiph/rav1e build
   cd build
 
@@ -744,7 +767,7 @@ then
   cd "$base_dir"
   cat <<EOL >rav1e-sources.txt
 https://github.com/xiph/rav1e
-$(git -C build rev-parse HEAD)
+$(cd build && git rev-parse HEAD)
 EOL
   rm -rf build
 fi
@@ -754,6 +777,7 @@ if echo "$args" | grep -q -i -w -E 'all|aomenc'
 then
   echo "building aomenc,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://aomedia.googlesource.com/aom build
   mkdir -p build/build-aom
   cd build/build-aom
@@ -764,7 +788,7 @@ then
   cd "$base_dir"
   cat <<EOL >aomenc-sources.txt
 https://aomedia.googlesource.com/aom
-$(git -C build rev-parse HEAD)
+$(cd build && git rev-parse HEAD)
 EOL
   rm -rf build
 fi
@@ -774,6 +798,7 @@ if echo "$args" | grep -q -i -w -E 'all|mediainfo'
 then
   echo "building mediainfo,..."
   cd "$base_dir"
+  rm -rf build
   mkdir build
   cd build
   ver=$(wget -q -O - "https://mediaarea.net/en/MediaInfo/Download/Source" | \
@@ -847,6 +872,7 @@ if echo "$args" | grep -q -i -w -E 'all|d2vwitch'
 then
   echo "building d2vwitch,..."
   cd "$base_dir"
+  rm -rf build
   mkdir build
   cd build
 
@@ -891,13 +917,13 @@ then
 
   cat <<EOL >d2vwitch-sources.txt
 https://github.com/dubhater/D2VWitch
-$(git -C build/D2VWitch rev-parse HEAD)
+$(cd build/D2VWitch && git rev-parse HEAD)
 
 https://github.com/FFmpeg/FFmpeg
-$(git -C build/FFmpeg rev-parse HEAD)
+$(cd build/FFmpeg && git rev-parse HEAD)
 
 https://github.com/vapoursynth/vapoursynth
-$(git -C build/vapoursynth rev-parse HEAD)
+$(cd build/vapoursynth && git rev-parse HEAD)
 EOL
   cd "$base_dir"
   rm -rf build
@@ -908,6 +934,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmsindex'
 then
   echo "building ffmsindex,..."
   cd "$base_dir"
+  rm -rf build
   mkdir build
   cd build
 
@@ -947,10 +974,10 @@ then
 
   cat <<EOL >ffmsindex-sources.txt
 https://github.com/FFMS/ffms2
-$(git -C ffms2 rev-parse HEAD)
+$(cd ffms2 && git rev-parse HEAD)
 
 https://github.com/FFmpeg/FFmpeg
-$(git -C FFmpeg rev-parse HEAD)
+$(cd FFmpeg && git rev-parse HEAD)
 EOL
   rm -rf build
 fi
@@ -960,6 +987,7 @@ if echo "$args" | grep -q -i -w -E 'all|x264'
 then
   echo "building x264,..."
   cd "$base_dir"
+  rm -rf build
   mkdir build
   cd build
   top="$PWD"
@@ -1005,22 +1033,21 @@ then
   ./configure --enable-strip --disable-gpac --extra-ldflags="$(pkg-config --static --libs ffms2) -Wl,--gc-sections"
   make $MAKEFLAGS
   cp -f x264 "$base_dir"
+  
+  # Create sources file properly
   cd "$base_dir"
-  cat <<EOL >/x264-sources.txt
-  cp -f x264 "$base_dir"
-  cd "$base_dir"
-  cat <<EOL >/x264-sources.txt
+  cat <<EOL >x264-sources.txt
 https://code.videolan.org/videolan/x264.git
-$(git -C x264 rev-parse HEAD)
+$(cd build/x264 && git rev-parse HEAD)
 
 https://github.com/l-smash/l-smash
-$(git -C l-smash rev-parse HEAD)
+$(cd build/l-smash && git rev-parse HEAD)
 
 https://github.com/FFMS/ffms2
-$(git -C ffms2 rev-parse HEAD)
+$(cd build/ffms2 && git rev-parse HEAD)
 
 https://github.com/FFmpeg/FFmpeg
-$(git -C FFmpeg rev-parse HEAD)
+$(cd build/FFmpeg && git rev-parse HEAD)
 EOL
   rm -rf build
 fi
@@ -1030,6 +1057,7 @@ if echo "$args" | grep -q -i -w -E 'all|mkvmerge|mkvextract|mkvinfo|mkvtoolnix'
 then
   echo "building MKVToolnix,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://codeberg.org/mbunkus/mkvtoolnix.git build
   cd build
   git checkout $(git tag --list | sort -V | tail -1)
@@ -1050,6 +1078,7 @@ if echo "$args" | grep -q -i -w -E 'all|svthevc'
 then
   echo "building SVT-HEVC,..."
   cd "$base_dir"
+  rm -rf build
   git clone --depth 1 https://github.com/OpenVisualCloud/SVT-HEVC.git build
   mkdir -p build/build
   cd build/build
@@ -1067,7 +1096,8 @@ if echo "$args" | grep -q -i -w -E 'all|svtav1'
 then
   echo "building SVT-AV1,..."
   cd "$base_dir"
-  git clone --depth 1 --branc v3.1.2 https://gitlab.com/AOMediaCodec/SVT-AV1.git build
+  rm -rf build
+  git clone --depth 1 -b v3.1.2 https://gitlab.com/AOMediaCodec/SVT-AV1.git build
   mkdir -p build/build
   cd build/build
   cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
@@ -1083,6 +1113,7 @@ fi
 if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   echo "building FFmpeg,..."
   cd "$base_dir"
+  rm -rf build
   mkdir -p build
   cd build
 
@@ -1258,7 +1289,7 @@ EOF
   mkdir -p "$top/libs/lib/pkgconfig"
 
   # Version robust ermitteln
-  x265_version=$(grep -Po '(?<=set\(X265_VERSION ).*' "$top/x265/source/CMakeLists.txt" 2>/dev/null | tr -d ')')
+  x265_version=$(grep -Po '(?<=set$X265_VERSION ).*' "$top/x265/source/CMakeLists.txt" 2>/dev/null | tr -d ')')
   if [ -z "$x265_version" ]; then
       # Fallback: aus x265.h
       x265_version=$(grep -Po '(?<=#define X265_BUILD\s)[0-9]+' "$top/x265/source/x265.h" 2>/dev/null || echo "unknown")
@@ -1340,67 +1371,67 @@ EOF
   cd "$base_dir"
   cat <<EOL >ffmpeg-sources.txt
 https://github.com/FFmpeg/FFmpeg
-$(git -C build/ffmpeg-src rev-parse HEAD)
+$(cd build/ffmpeg-src && git rev-parse HEAD)
 
 https://github.com/fribidi/fribidi
-$(git -C build/fribidi rev-parse HEAD)
+$(cd build/fribidi && git rev-parse HEAD)
 
 https://github.com/harfbuzz/harfbuzz
-$(git -C build/harfbuzz rev-parse HEAD)
+$(cd build/harfbuzz && git rev-parse HEAD)
 
 https://github.com/ultravideo/kvazaar
-$(git -C build/kvazaar rev-parse HEAD)
+$(cd build/kvazaar && git rev-parse HEAD)
 
 https://github.com/libass/libass
-$(git -C build/libass rev-parse HEAD)
+$(cd build/libass && git rev-parse HEAD)
 
 https://code.videolan.org/videolan/libbluray.git
-$(git -C build/libbluray rev-parse HEAD)
+$(cd build/libbluray && git rev-parse HEAD)
 
 https://github.com/xiph/ogg
-$(git -C build/ogg rev-parse HEAD)
+$(cd build/ogg && git rev-parse HEAD)
 
 https://github.com/xiph/vorbis
-$(git -C build/vorbis rev-parse HEAD)
+$(cd build/vorbis && git rev-parse HEAD)
 
 https://github.com/xiph/theora
-$(git -C build/theora rev-parse HEAD)
+$(cd build/theora && git rev-parse HEAD)
 
 https://github.com/xiph/flac
-$(git -C build/flac rev-parse HEAD)
+$(cd build/flac && git rev-parse HEAD)
 
 https://chromium.googlesource.com/webm/libvpx
-$(git -C build/libvpx rev-parse HEAD)
+$(cd build/libvpx && git rev-parse HEAD)
 
 https://chromium.googlesource.com/webm/libwebp
-$(git -C build/libwebp rev-parse HEAD)
+$(cd build/libwebp && git rev-parse HEAD)
 
 https://code.videolan.org/videolan/x264.git
-$(git -C build/x264 rev-parse HEAD)
+$(cd build/x264 && git rev-parse HEAD)
 
 https://github.com/FFmpeg/nv-codec-headers
-$(git -C build/nv-codec-headers rev-parse HEAD)
+$(cd build/nv-codec-headers && git rev-parse HEAD)
 
 opencore-amr: https://git.code.sf.net/p/opencore-amr/code
-$(git -C build/opencore-amr rev-parse HEAD)
+$(cd build/opencore-amr && git rev-parse HEAD)
 
 https://git.code.sf.net/p/opencore-amr/vo-amrwbenc
-$(git -C build/vo-amrwbenc rev-parse HEAD)
+$(cd build/vo-amrwbenc && git rev-parse HEAD)
 
 git clone --depth 1 https://github.com/xiph/opus
-$(git -C build/opus rev-parse HEAD)
+$(cd build/opus && git rev-parse HEAD)
 
 https://github.com/xiph/libopusenc
-$(git -C build/libopusenc rev-parse HEAD)
+$(cd build/libopusenc && git rev-parse HEAD)
 
 https://github.com/xiph/opusfile
-$(git -C build/opusfile rev-parse HEAD)
+$(cd build/opusfile && git rev-parse HEAD)
 
 https://svn.code.sf.net/p/lame/svn/trunk/lame
-revision $(svn info build/lame | grep '^Revision:' | cut -d' ' -f2)
+revision $(cd build/lame && svn info | grep '^Revision:' | cut -d' ' -f2)
 
 https://bitbucket.org/multicoreware/x265
-$(git -c build/x265 rev-parse HEAD)
+$(cd build/x265 && git rev-parse HEAD)
 EOL
   cd "$base_dir"
   rm -rf build
@@ -1412,6 +1443,8 @@ fi
 if echo "$args" | grep -q -i -w -E 'all|mencoder|mplayer'
 then
   echo "building MEncoder/MPlayer,..."
+  cd "$base_dir"
+  rm -rf build
   svn checkout svn://svn.mplayerhq.hu/mplayer/trunk build
   cd build
   git clone --depth 1 --branch release/7.1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
@@ -1422,3 +1455,4 @@ then
   cd ..
   rm -rf build
 fi
+
