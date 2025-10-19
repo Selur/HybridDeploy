@@ -154,6 +154,7 @@ if [ -x "/usr/bin/apt" ]; then
   libxcb-xfixes*-dev \
   libxcb-shape*-dev \
   libcmark-dev \
+  libtheora-dev \
   ninja-build
 fi
 
