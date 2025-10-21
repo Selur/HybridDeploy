@@ -493,7 +493,7 @@ then
   rm -rf build
   git clone --depth 1 https://github.com/Selur/BDSup2SubPlusPlus build
   cd build
-  qmake src/bdsup2sub++.pro
+  qmake6 src/bdsup2sub++.pro
   make clean
   make $MAKEFLAGS
   strip bdsup2sub++
