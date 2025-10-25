@@ -108,6 +108,9 @@ if [ -x "/usr/bin/apt" ]; then
   libtool-bin \
   pkg-config \
   qt6-base-dev \
+  qt6-multimedia-dev \
+  qt6-svg-dev \
+  qtbase5-dev \
   docbook-xsl \
   xsltproc \
   rake \
