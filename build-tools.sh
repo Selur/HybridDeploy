@@ -158,6 +158,7 @@ if [ -x "/usr/bin/apt" ]; then
   libxcb-shape*-dev \
   libcmark-dev \
   libtheora-dev \
+  libfribidi-dev \
   ninja-build \
   meson
 fi
