@@ -158,7 +158,8 @@ if [ -x "/usr/bin/apt" ]; then
   libxcb-shape*-dev \
   libcmark-dev \
   libtheora-dev \
-  ninja-build
+  ninja-build \
+  meson
 fi
 
 mkdir -p tools
