@@ -3,7 +3,7 @@ set -e
 set -x
 
 # ===========================================
-# Hybrid AppImage Build Script
+# Hybrid AppImage Build Script (with 32-bit support)
 # ===========================================
 
 # --- Configuration ---
@@ -43,10 +43,13 @@ if [ -n "$missing_bins" ]; then
 fi
 
 # --- Install dependencies ---
+sudo dpkg --add-architecture i386
 sudo apt-get update
 sudo apt-get install --no-install-recommends -y \
   qt6-base-dev qt6-base-dev-tools qt6-multimedia-dev qt6-svg-dev \
-  libqt6svg6 libqt6multimedia6 libqt6widgets6 libqt6gui6 libqt6core6 p7zip-full rsync wget
+  libqt6svg6 libqt6multimedia6 libqt6widgets6 libqt6gui6 libqt6core6 \
+  p7zip-full rsync wget libc6:i386 libstdc++6:i386 libgcc-s1:i386 libpthread-stubs0-dev:i386
+
 
 # --- Prepare AppDir ---
 DEPLOY_DIR="$SCRIPT_DIR/hybrid"
@@ -59,6 +62,29 @@ mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/lib" "$APPDIR/usr/share/applications" "$
 for bin in $all_binaries; do
     cp "$TOOLS_DIR/$bin" "$APPDIR/usr/bin/"
     chmod +x "$APPDIR/usr/bin/$bin"
+done
+
+# --- 32-bit runtime support ---
+echo "🔍 Bundling 32-bit libraries..."
+mkdir -p "$APPDIR/usr/lib32"
+for bin in $all_binaries; do
+    if file "$APPDIR/usr/bin/$bin" | grep -q "32-bit"; then
+        echo "📦 Detected 32-bit binary: $bin"
+        # Copy dependencies
+        deps=$(ldd "$APPDIR/usr/bin/$bin" | awk '/=>/ {print $3}' | grep "^/lib32" || true)
+        for dep in $deps; do
+            if [ -f "$dep" ]; then
+                echo "  ↳ Copying dependency: $dep"
+                cp -v --parents "$dep" "$APPDIR/usr/lib32/" 2>/dev/null || true
+            fi
+        done
+        # Copy 32-bit loader
+        if [ -f "/lib/ld-linux.so.2" ]; then
+            echo "  ↳ Copying ld-linux.so.2"
+            mkdir -p "$APPDIR/usr/lib32/lib"
+            cp -v /lib/ld-linux.so.2 "$APPDIR/usr/lib32/"
+        fi
+    fi
 done
 
 # --- Icon + desktop file ---
@@ -83,29 +109,69 @@ Categories=AudioVideo;Video;
 EOF
 
 # --- Launchers ---
-cat <<EOF > "$APPDIR/usr/bin/HybridLauncher"
+cat <<'EOF' > "$APPDIR/usr/bin/HybridLauncher"
 #!/bin/bash
-HERE="\$(dirname "\$(readlink -f "\${BASH_SOURCE[0]}")")/.."
-export LD_LIBRARY_PATH="\$HERE/usr/lib:\$HERE/lib:\$LD_LIBRARY_PATH"
-export QT_QPA_PLATFORM_PLUGIN_PATH="\$HERE/usr/lib/qt6/plugins/platforms"
-export QT_PLUGIN_PATH="\$HERE/usr/lib/qt6/plugins"
-export QML2_IMPORT_PATH="\$HERE/usr/lib/qt6/qml"
-exec "\$HERE/usr/bin/Hybrid" "\$@"
+HERE="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.."
+
+# 64-bit libraries
+export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/lib:$LD_LIBRARY_PATH"
+
+# 32-bit binaries loader
+export LIB32="$HERE/usr/lib32"
+export LD_LIBRARY_PATH="$LIB32:$LD_LIBRARY_PATH"
+
+# Qt paths
+export QT_QPA_PLATFORM_PLUGIN_PATH="$HERE/usr/lib/qt6/plugins/platforms"
+export QT_PLUGIN_PATH="$HERE/usr/lib/qt6/plugins"
+export QML2_IMPORT_PATH="$HERE/usr/lib/qt6/qml"
+
+# Wrapper function for 32-bit binaries
+run_bin() {
+    BIN="$HERE/usr/bin/$1"
+    shift
+    if file "$BIN" | grep -q "32-bit"; then
+        "$LIB32/ld-linux.so.2" --library-path "$LIB32" "$BIN" "$@"
+    else
+        "$BIN" "$@"
+    fi
+}
+
+run_bin Hybrid "$@"
 EOF
 chmod +x "$APPDIR/usr/bin/HybridLauncher"
 
-
-cat <<EOF > "$APPDIR/AppRun"
+cat <<'EOF' > "$APPDIR/AppRun"
 #!/bin/bash
-HERE="\$(dirname "\$(readlink -f "\${BASH_SOURCE[0]}")")"
-export LD_LIBRARY_PATH="\$HERE/usr/lib:\$HERE/lib:\$LD_LIBRARY_PATH"
-export QT_QPA_PLATFORM_PLUGIN_PATH="\$HERE/usr/lib/qt6/plugins/platforms"
-export QT_PLUGIN_PATH="\$HERE/usr/lib/qt6/plugins"
-export QML2_IMPORT_PATH="\$HERE/usr/lib/qt6/qml"
-exec "\$HERE/usr/bin/Hybrid" "\$@"
+HERE="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+
+# 64-bit libraries
+export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/lib:$LD_LIBRARY_PATH"
+
+# 32-bit binaries loader
+export LIB32="$HERE/usr/lib32"
+export LD_LIBRARY_PATH="$LIB32:$LD_LIBRARY_PATH"
+
+# Qt paths
+export QT_QPA_PLATFORM_PLUGIN_PATH="$HERE/usr/lib/qt6/plugins/platforms"
+export QT_PLUGIN_PATH="$HERE/usr/lib/qt6/plugins"
+export QML2_IMPORT_PATH="$HERE/usr/lib/qt6/qml"
+
+# Wrapper function for 32-bit binaries
+run_bin() {
+    BIN="$HERE/usr/bin/$1"
+    shift
+    if file "$BIN" | grep -q "32-bit"; then
+        "$LIB32/ld-linux.so.2" --library-path "$LIB32" "$BIN" "$@"
+    else
+        "$BIN" "$@"
+    fi
+}
+
+run_bin Hybrid "$@"
 EOF
 chmod +x "$APPDIR/AppRun"
 
+# --- Copy desktop file to AppDir root ---
 cp "$APPDIR/usr/share/applications/hybrid.desktop" "$APPDIR/"
 
 # --- Download linuxdeploy and appimagetool ---
