@@ -295,7 +295,7 @@ then
   cd build
   git clone https://github.com/vapoursynth/vapoursynth vapoursynth-git
   cd vapoursynth-git
-  git checkout $(git tag | grep '^R' | sort -V | tail -1)
+  git checkout $(git tag | grep '^R72' | sort -V | tail -1)
   export LD_LIBRARY_PATH="$PWD/include"
   export CPPFLAGS="-I$PWD/include"
   echo "INCLUDEPATH += $PWD/include" >> ../vsViewer.pro
@@ -1360,7 +1360,6 @@ EOF
     --enable-libwebp \
     --enable-libx264 \
     --enable-libx265 \
-    --enable-libkvazaar \
     --enable-libxcb \
     --enable-libxcb-shm \
     --enable-libxcb-xfixes \
@@ -1384,9 +1383,6 @@ $(cd build/fribidi && git rev-parse HEAD)
 
 https://github.com/harfbuzz/harfbuzz
 $(cd build/harfbuzz && git rev-parse HEAD)
-
-https://github.com/ultravideo/kvazaar
-$(cd build/kvazaar && git rev-parse HEAD)
 
 https://github.com/libass/libass
 $(cd build/libass && git rev-parse HEAD)
