@@ -212,6 +212,9 @@ then
   cd build
   git clone --depth 1 https://github.com/justdan96/tsMuxer
   cd tsMuxer
+  # Fix CMake >= 4.x compatibility everywhere
+  find . -name CMakeLists.txt -print0 | xargs -0 sed -i 's/cmake_minimum_required *(VERSION \([0-2]\|3\.[0-4]\))/cmake_minimum_required(VERSION 3.5)/'
+
   ./scripts/rebuild_linux.sh
   cd bin
   strip tsMuxeR
@@ -442,6 +445,8 @@ then
   cd "$base_dir"
   rm -rf build
   git clone --depth 1 https://git.code.sf.net/p/aften/code build
+  # Fix CMake >= 4.x compatibility everywhere
+  find . -name CMakeLists.txt -print0 | xargs -0 sed -i -E 's/cmake_minimum_required\s*\(VERSION\s*[0-9.]+\)/cmake_minimum_required(VERSION 3.5)/Ig'
   mkdir -p build/build
   cd build/build
   cmake .. -DCMAKE_BUILD_TYPE=Release -DSHARED=OFF
