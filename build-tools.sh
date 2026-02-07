@@ -2,6 +2,7 @@
 set -e
 
 MAKEFLAGS="-j4"
+FFMPEG_VERSION="n8.0.1"
 
 base_dir=$(pwd)/tools/
 
@@ -892,7 +893,7 @@ then
   export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig"
 
   git clone --depth 1 https://github.com/dubhater/D2VWitch
-  git clone --depth 1 --branch release/6.1 https://github.com/FFmpeg/FFmpeg
+  git clone --depth 1 --branch release/6.1  https://github.com/FFmpeg/FFmpeg
   git clone --depth 1 https://github.com/vapoursynth/vapoursynth
 
   build_nasm
@@ -954,7 +955,7 @@ then
   export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig"
 
   git clone --depth 1 https://github.com/FFMS/ffms2
-  git clone --depth 1 https://github.com/FFmpeg/FFmpeg
+  git clone --depth 1 --branch "$FFMPEG_VERSION" https://github.com/FFmpeg/FFmpeg
 
   build_nasm
 
@@ -1008,7 +1009,7 @@ then
   git clone --depth 1 https://code.videolan.org/videolan/x264.git
   git clone --depth 1 https://github.com/l-smash/l-smash
   git clone --depth 1 https://github.com/FFMS/ffms2
-  git clone --depth 1 https://github.com/FFmpeg/FFmpeg
+  git clone --depth 1 --branch "$FFMPEG_VERSION" https://github.com/FFmpeg/FFmpeg
 
   build_nasm
 
@@ -1108,7 +1109,7 @@ then
   echo "building SVT-AV1,..."
   cd "$base_dir"
   rm -rf build
-  git clone --depth 1 -b v3.1.2 https://gitlab.com/AOMediaCodec/SVT-AV1.git build
+  git clone --depth 1 -b v4.0.1 https://gitlab.com/AOMediaCodec/SVT-AV1.git build
   mkdir -p build/build
   cd build/build
   cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
@@ -1133,7 +1134,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   export PKG_CONFIG_PATH="$LIBS/lib/pkgconfig:$PKG_CONFIG_PATH"
 
   # Clone sources
-  git clone --depth 1 --branch release/7.1 https://github.com/FFmpeg/FFmpeg ffmpeg-src
+  git clone --depth 1 --branch "$FFMPEG_VERSION" https://github.com/FFmpeg/FFmpeg ffmpeg-src
   git clone --depth 1 https://github.com/fribidi/fribidi
   git clone --depth 1 https://github.com/harfbuzz/harfbuzz
   cd harfbuzz
@@ -1454,7 +1455,7 @@ then
   rm -rf build
   svn checkout svn://svn.mplayerhq.hu/mplayer/trunk build
   cd build
-  git clone --depth 1 --branch release/7.1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
+  git clone --depth 1 --branch "$FFMPEG_VERSION" https://git.ffmpeg.org/ffmpeg.git ffmpeg
   ./configure --disable-relocatable --enable-runtime-cpudetection
   make $MAKEFLAGS
   strip mencoder mplayer
