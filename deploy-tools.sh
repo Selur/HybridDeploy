@@ -59,6 +59,7 @@ sudo apt-get update
 sudo apt-get install --no-install-recommends -y \
   qt6-base-dev qt6-base-dev-tools qt6-multimedia-dev qt6-svg-dev \
   libqt6svg6 libqt6multimedia6 libqt6widgets6 libqt6gui6 libqt6core6 \
+  qt6-wayland libqt6waylandclient6 libqt6waylandcompositor6 \
   p7zip-full rsync wget libc6:i386 libstdc++6:i386 libgcc-s1:i386 libpthread-stubs0-dev:i386
 
 # --- Prepare AppDir ---
@@ -186,7 +187,7 @@ Type=Application
 Categories=AudioVideo;Video;
 EOF
 
-# --- Launchers (unchanged) ---
+# --- Launchers ---
 cat <<'EOF' > "$APPDIR/usr/bin/HybridLauncher"
 #!/usr/bin/env bash
 set -euo pipefail
@@ -203,6 +204,14 @@ export QML2_IMPORT_PATH="$HERE/usr/lib/qt6/qml"
 
 export GIO_MODULE_DIR="$HERE/usr/lib/gio/modules"
 export XDG_DATA_DIRS="$HERE/usr/share:${XDG_DATA_DIRS:-}"
+
+# Plattform-Auswahl: Wayland wenn verfügbar, sonst XCB
+if [ -n "${WAYLAND_DISPLAY:-}" ] && \
+   [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland-generic.so" ]; then
+  export QT_QPA_PLATFORM="wayland;xcb"
+else
+  export QT_QPA_PLATFORM="xcb"
+fi
 
 BIN="$HERE/usr/bin/Hybrid"
 if file "$BIN" | grep -q "32-bit"; then
@@ -233,6 +242,14 @@ export QML2_IMPORT_PATH="$HERE/usr/lib/qt6/qml"
 
 export GIO_MODULE_DIR="$HERE/usr/lib/gio/modules"
 export XDG_DATA_DIRS="$HERE/usr/share:${XDG_DATA_DIRS:-}"
+
+# Plattform-Auswahl: Wayland wenn verfügbar, sonst XCB
+if [ -n "${WAYLAND_DISPLAY:-}" ] && \
+   [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland-generic.so" ]; then
+  export QT_QPA_PLATFORM="wayland;xcb"
+else
+  export QT_QPA_PLATFORM="xcb"
+fi
 
 BIN="$HERE/usr/bin/Hybrid"
 if file "$BIN" | grep -q "32-bit"; then
@@ -279,26 +296,66 @@ export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib32"
   -d "$APPDIR/usr/share/applications/hybrid.desktop" \
   --plugin qt || echo "⚠️ linuxdeploy failed — fallback will run."
 
+# --- Bundle Qt6 libs (Core + DBus + all essentials) ---
 mkdir -p "$APPDIR/usr/lib/qt6/plugins"
+QT_LIB_DIR="/usr/lib"   # Arch default path, adjust if needed
+QT_LIBS=("Qt6Core" "Qt6Gui" "Qt6Widgets" "Qt6Xml" "Qt6Svg" "Qt6Multimedia" \
+         "Qt6Network" "Qt6Concurrent" "Qt6OpenGL" "Qt6Qml" "Qt6Quick" \
+         "Qt6QuickControls2" "Qt6DBus")
 
-QT_LIB_DIR="/usr/lib/x86_64-linux-gnu"
-if [ -z "$(find "$APPDIR/usr/lib" -maxdepth 1 -name 'libQt6*.so*' 2>/dev/null)" ]; then
-  echo "⚠️ Qt6 libs missing, copying manually..."
-  for lib in Core Gui Widgets Xml Svg Multimedia Network Concurrent OpenGL Qml Quick QuickControls2 DBus; do
-    src="$QT_LIB_DIR/libQt6${lib}.so.6"
-    if [ -f "$src" ]; then
-      cp -v --preserve=links "$src" "$APPDIR/usr/lib/" || true
-    else
-      echo "  ⚠️ missing lib on build host: $src"
-    fi
-  done
-  for f in "$QT_LIB_DIR"/libQt6*.so*; do
-    [ -f "$f" ] && cp -v --preserve=links "$f" "$APPDIR/usr/lib/" || true
-  done
-  QT_PLUGIN_BASE="$QT_LIB_DIR/qt6/plugins"
-  if [ -d "$QT_PLUGIN_BASE" ]; then
-    rsync -a "$QT_PLUGIN_BASE/" "$APPDIR/usr/lib/qt6/plugins/"
+echo "📦 Copying Qt6 libraries..."
+mkdir -p "$APPDIR/usr/lib"
+for lib in "${QT_LIBS[@]}"; do
+    for so in "$QT_LIB_DIR/lib${lib}.so"*; do
+        [ -f "$so" ] && cp -v --preserve=links "$so" "$APPDIR/usr/lib/"
+    done
+done
+
+# --- Copy Qt plugins ---
+QT_PLUGIN_DIR="$QT_LIB_DIR/qt6/plugins"
+if [ -d "$QT_PLUGIN_DIR" ]; then
+    echo "📦 Copying Qt6 plugins..."
+    mkdir -p "$APPDIR/usr/lib/qt6/plugins"
+    rsync -a "$QT_PLUGIN_DIR/" "$APPDIR/usr/lib/qt6/plugins/"
+fi
+
+echo "🔧 Bundling Qt platform plugins..."
+QT_PLATFORM_PLUGINS_SRC="$QT_LIB_DIR/qt6/plugins/platforms"
+QT_PLATFORM_PLUGINS_DST="$APPDIR/usr/lib/qt6/plugins/platforms"
+mkdir -p "$QT_PLATFORM_PLUGINS_DST"
+
+if [ -d "$QT_PLATFORM_PLUGINS_SRC" ]; then
+  cp -v --preserve=links "$QT_PLATFORM_PLUGINS_SRC"/libqwayland*.so \
+    "$QT_PLATFORM_PLUGINS_DST/" 2>/dev/null || echo "⚠️ Wayland plugins not found on build host"
+  cp -v --preserve=links "$QT_PLATFORM_PLUGINS_SRC"/libqxcb.so \
+    "$QT_PLATFORM_PLUGINS_DST/" 2>/dev/null || true
+fi
+
+# Wayland-Client-Lib
+for lib in \
+  libQt6WaylandClient.so.6 \
+  libQt6WaylandCompositor.so.6 \
+  libwayland-client.so.0 \
+  libwayland-egl.so.1 \
+  libwayland-cursor.so.0; do
+  src=$(ldconfig -p | grep "/$lib" | awk '{print $NF}' | head -n1 || true)
+  if [ -n "$src" ]; then
+    cp -v --preserve=links "$src" "$APPDIR/usr/lib/" || true
+  else
+    echo "⚠️ $lib not found on build host"
   fi
+done
+
+
+# --- Fix RPATH in Hybrid binary ---
+echo "🔧 Patching Hybrid binary RPATH..."
+patchelf --set-rpath '$ORIGIN/../lib:$ORIGIN/../lib32' "$APPDIR/usr/bin/Hybrid"
+
+# --- Verify DBus library loads internally ---
+echo "🔍 Verifying libQt6DBus.so.6 in AppImage..."
+if [ ! -f "$APPDIR/usr/lib/libQt6DBus.so.6" ]; then
+    echo "❌ libQt6DBus.so.6 not found in AppDir!"
+    exit 1
 fi
 
 THEORA_LIB_DIR="/usr/lib/x86_64-linux-gnu"
