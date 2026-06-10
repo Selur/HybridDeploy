@@ -1133,6 +1133,15 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   export PATH="$top:$PATH"
   export PKG_CONFIG_PATH="$LIBS/lib/pkgconfig:$PKG_CONFIG_PATH"
 
+  # Ensure nv-codec-headers are available for NVENC support (no GPU/CUDA needed at compile time)
+  if [ ! -d "/usr/local/cuda/include/ffnvcodec" ]; then
+    echo "Installing nv-codec-headers for NVENC compile-time support..."
+    git clone --depth 1 -b n12.2.72.0 https://github.com/FFmpeg/nv-codec-headers /tmp/nv-codec-headers
+    sudo mkdir -p /usr/local/cuda/include /usr/local/cuda/lib64
+    sudo cp -r /tmp/nv-codec-headers/include/ffnvcodec /usr/local/cuda/include/
+    rm -rf /tmp/nv-codec-headers
+  fi
+
   # Clone sources
   git clone --depth 1 --branch "$FFMPEG_VERSION" https://github.com/FFmpeg/FFmpeg ffmpeg-src
   git clone --depth 1 https://github.com/fribidi/fribidi
@@ -1151,7 +1160,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   git clone --depth 1 https://chromium.googlesource.com/webm/libvpx
   git clone --depth 1 https://chromium.googlesource.com/webm/libwebp
   git clone --depth 1 https://code.videolan.org/videolan/x264.git
-  git clone --depth 1 https://github.com/FFmpeg/nv-codec-headers
+  git clone --depth 1 -b n12.2.72.0 https://github.com/FFmpeg/nv-codec-headers
   git clone --depth 1 https://git.code.sf.net/p/opencore-amr/code opencore-amr
   git clone --depth 1 https://git.code.sf.net/p/opencore-amr/vo-amrwbenc
   git clone --depth 1 https://github.com/xiph/opus
@@ -1249,9 +1258,6 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   # vo-amrwbenc (Autotools)
   build_ffdep vo-amrwbenc autotools ""
 
-  # nv-codec-headers "installieren" ohne make install
-  mkdir -p "$top/libs/include"
-  cp -r nv-codec-headers/include/ffnvcodec "$top/libs/include/"
   # --- x264 build ---
   cd "$top/x264"
 
@@ -1326,15 +1332,14 @@ EOF
   # Test, ob pkg-config x265 findet
   echo "x265 version found by pkg-config: \$(pkg-config --modversion x265 2>/dev/null || echo 'not found')"
 
-  # NVENC/CUVID nur aktivieren, wenn die NVIDIA Libs vorhanden sind
-  if [ -d "/usr/local/cuda/include" ] && [ -d "/usr/local/cuda/lib64" ]; then
-      nvflags="--enable-ffnvcodec --enable-nvdec --enable-nvenc --enable-cuvid"
-      extra_ldflags="-L/usr/local/cuda/lib64"
-  else
-      echo "NVIDIA CUDA libs nicht gefunden, CUVID/NVENC deaktiviert"
-      nvflags=""
-      extra_ldflags=""
-  fi
+  # nv-codec-headers — install into local libs tree (generates ffnvcodec.pc for pkg-config)
+  cd "$top/nv-codec-headers"
+  make PREFIX="$top/libs" install
+  cd "$top"
+
+  # Always enable NVENC/NVDEC — loaded via dlopen at runtime, no GPU needed at build time
+  nvflags="--enable-ffnvcodec --enable-nvdec --enable-nvenc --enable-cuvid"
+  extra_ldflags=""
 
   # FFmpeg build
   cd "$top/ffmpeg-src"
