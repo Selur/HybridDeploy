@@ -68,13 +68,103 @@ APPDIR="$DEPLOY_DIR/AppDir"
 
 rm -rf "$DEPLOY_DIR"
 mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/lib" "$APPDIR/usr/lib32" \
-         "$APPDIR/usr/share/applications" "$APPDIR/usr/share/icons/hicolor/1024x1024/apps"
+         "$APPDIR/usr/share/applications" "$APPDIR/usr/share/icons/hicolor/512x512/apps"
 
 echo "📦 Copying tool binaries into AppDir..."
 for bin in $all_binaries; do
   cp "$TOOLS_DIR/$bin" "$APPDIR/usr/bin/"
   chmod +x "$APPDIR/usr/bin/$bin"
 done
+
+# --- VapourSynth: bundled interpreter + wheelhouse + hand-built plugins --- see Hybrid/docs/32-linux-appimage-vapoursynth.md
+echo "🐍 Bundling VapourSynth (interpreter + pip wheelhouse + native plugins)..."
+
+VS_DIR="$APPDIR/usr/vapoursynth"
+VS_PYTHON="$VS_DIR/python"
+mkdir -p "$VS_DIR"
+
+VS_PBS_TAG="20260901"
+VS_PBS_ASSET="cpython-3.14.7+${VS_PBS_TAG}-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz"
+if [ ! -x "$VS_PYTHON/bin/python3" ]; then
+  echo "  ⬇️ Fetching python-build-standalone ($VS_PBS_TAG)..."
+  curl -sL "https://github.com/astral-sh/python-build-standalone/releases/download/${VS_PBS_TAG}/${VS_PBS_ASSET}" \
+    -o "$DEPLOY_DIR/python.tar.gz"
+  mkdir -p "$VS_PYTHON"
+  tar xzf "$DEPLOY_DIR/python.tar.gz" -C "$VS_DIR"
+  rm -f "$DEPLOY_DIR/python.tar.gz"
+fi
+
+VS_PY_BIN="$VS_PYTHON/bin/python3"
+"$VS_PY_BIN" -m ensurepip --upgrade >/dev/null 2>&1 || true
+
+# Packages confirmed to have a working manylinux wheel (docs 4.2/4.9); dghdrtosdr excluded, win_amd64-only, see docs section 7 point 4.
+VS_PIP_PACKAGES="
+vapoursynth
+vapoursynth-mvutensils vapoursynth-adaptivegrain vapoursynth-akarin
+vapoursynth-awarp vapoursynth-bestsource vapoursynth-bilateralgpu
+vapoursynth-bm3d vapoursynth-bwdif vapoursynth-cas vapoursynth-cdef
+vapoursynth-cranexpr vapoursynth-d2vsource vapoursynth-dctfilter
+vapoursynth-deblock vapoursynth-decross vapoursynth-dedot vapoursynth-descale
+vapoursynth-descratch vapoursynth-dotkill vapoursynth-edgefixer
+vapoursynth-edgemasks vapoursynth-eedi3 vapoursynth-eedi3vk2
+vapoursynth-fillborders vapoursynth-ffms2 vapoursynth-fmtconv
+vapoursynth-hysteresis vapoursynth-iscombed vapoursynth-knlmeanscl
+vapoursynth-lsmas
+vapoursynth-mvtools vapoursynth-nnedi3vk vapoursynth-nlm-cuda
+vapoursynth-nlm-ispc vapoursynth-resize2 vapoursynth-sangnom
+vapoursynth-scenechange vapoursynth-sneedif vapoursynth-subtext
+vapoursynth-timecube vapoursynth-vivtc vapoursynth-tivtc
+vapoursynth-bifrost vapoursynth-vszip vapoursynth-vszipcu
+vapoursynth-vszipcl vapoursynth-wnnm vapoursynth-zit vapoursynth-znedi3
+vapoursynth-zsmooth vapoursynth-oxidctf vapoursynth-composite
+vapoursynth-interlace vs-placebo vsnoise
+"
+echo "  📦 Installing pip wheelhouse..."
+for pkg in $VS_PIP_PACKAGES; do
+  "$VS_PY_BIN" -m pip install "$pkg" \
+    --extra-index-url https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple/ \
+    --disable-pip-version-check -q \
+    || echo "  ⚠️ $pkg failed to install (see docs section 4.9 for known exceptions)"
+done
+
+echo "  📦 Installing GitHub-release wheels (vinverse, grwrld)..."
+"$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
+  "https://github.com/Asd-g/vinverse/releases/download/0.9.6/vapoursynth_vinverse-0.9.6-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl" \
+  "https://github.com/Asd-g/AviSynthPlus-grayworld/releases/download/1.0.4/vapoursynth_grwrld-1.0.4-py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
+
+echo "  📦 Installing vsjetpack from git..."
+"$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
+  "vsjetpack @ git+https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack.git@main"
+
+VS_SITE="$VS_PYTHON/lib/python3.14/site-packages"
+VS_PLUGDIR="$VS_SITE/vapoursynth/plugins"
+
+echo "  🔧 Building the 8 plugins with no pip wheel (docs section 4.5-4.8)..."
+"$SCRIPT_DIR/build-vapoursynth-plugins.sh" "$DEPLOY_DIR/vsplugins-build"
+cp "$DEPLOY_DIR"/vsplugins-build/*.so "$VS_PLUGDIR/"
+
+echo "  🔧 Installing vsconfig-write.py (fixes vspipe on python-build-standalone, docs section 4.10)..."
+cp "$SCRIPT_DIR/vsconfig-write.py" "$VS_SITE/vapoursynth/"
+
+if [ ! -d "$VS_DIR/vsscripts/.git" ]; then
+  echo "  ⬇️ Cloning vsscripts..."
+  git clone --depth 1 https://github.com/Selur/VapoursynthScriptsInHybrid.git "$VS_DIR/vsscripts"
+fi
+
+# GLSL shader sources for the GLSL* color/sharpen filters and the GLSL-Resizers AI upscalers
+# (docs 32, 4.16); two different base paths, matching where Hybrid's own C++ looks for each:
+# GLSL/ under the plugins dir (VsFilter::filterLocation), GLSL-Resizers/ next to the binary itself.
+GLSL_CLONE="$DEPLOY_DIR/hybrid-glsl-filters"
+if [ ! -d "$GLSL_CLONE/.git" ]; then
+  echo "  ⬇️ Cloning hybrid-glsl-filters..."
+  git clone --depth 1 https://github.com/Selur/hybrid-glsl-filters.git "$GLSL_CLONE"
+fi
+cp -r "$GLSL_CLONE/GLSL" "$VS_PLUGDIR/"
+cp -r "$GLSL_CLONE/GLSL-Resizers" "$APPDIR/usr/bin/"
+
+# Stable, Python-version-independent paths for Hybrid's C++ side (Stufe E); "site-packages" name is required, see SystemHelper::resolveVapoursynthSitePackagesPath().
+ln -sf "python/lib/python3.14/site-packages" "$VS_DIR/site-packages"
+ln -sf "site-packages/vapoursynth/vspipe" "$VS_DIR/vspipe"
 
 echo "🔍 Scanning for missing dependencies..."
 
@@ -173,8 +263,13 @@ if [ ! -f "$ICON_PATH" ]; then
   exit 1
 fi
 
-cp "$ICON_PATH" "$APPDIR/hybrid.png"
-cp "$ICON_PATH" "$APPDIR/usr/share/icons/hicolor/1024x1024/apps/hybrid.png"
+# linuxdeploy only accepts a fixed set of icon resolutions (8..512px) for -i; the 1024px source fails with
+# "invalid x resolution" and linuxdeploy aborts to the fallback path. The hicolor theme also only
+# recognizes sizes its own index.theme declares (checked against the system's hicolor/index.theme -
+# "1024x1024" isn't one of them, "512x512" is), so QIcon::fromTheme("hybrid") silently finds nothing
+# at 1024x1024 regardless of XDG_DATA_DIRS. Both uses share the same 512px downscale.
+magick "$ICON_PATH" -resize 512x512 "$APPDIR/hybrid.png"
+cp "$APPDIR/hybrid.png" "$APPDIR/usr/share/icons/hicolor/512x512/apps/hybrid.png"
 
 cat <<EOF > "$APPDIR/usr/share/applications/hybrid.desktop"
 [Desktop Entry]
@@ -204,6 +299,37 @@ export QML2_IMPORT_PATH="$HERE/usr/lib/qt6/qml"
 
 export GIO_MODULE_DIR="$HERE/usr/lib/gio/modules"
 export XDG_DATA_DIRS="$HERE/usr/share:${XDG_DATA_DIRS:-}"
+
+# Bundled VapourSynth (docs 32); vsconfig-write.py must rerun every launch, the AppImage mount path changes each time (section 4.10).
+VS_PYTHON="$HERE/usr/vapoursynth/python"
+if [ -x "$VS_PYTHON/bin/python3" ]; then
+  export PYTHONHOME="$VS_PYTHON"
+  export PYTHONPATH="$VS_PYTHON/lib/python3.14/site-packages"
+  export PATH="$VS_PYTHON/bin:$VS_PYTHON/lib/python3.14/site-packages/vapoursynth:$PATH"
+  "$VS_PYTHON/bin/python3" \
+    "$VS_PYTHON/lib/python3.14/site-packages/vapoursynth/vsconfig-write.py" >/dev/null 2>&1 || true
+fi
+
+# Self-register the .desktop entry + icon so GNOME/desktop shells can resolve Hybrid's own icon for
+# the dock/taskbar - a bare AppImage isn't "installed" anywhere by default (docs 32, 4.15 Runde 24/25).
+# $APPIMAGE (set by the AppImage runtime) is the persistent path to the .AppImage file itself, unlike
+# $HERE which is the ephemeral mount point - rewritten every launch so a moved AppImage stays correct.
+if [ -n "${APPIMAGE:-}" ]; then
+  DESKTOP_DIR="$HOME/.local/share/applications"
+  ICON_DIR="$HOME/.local/share/icons/hicolor/512x512/apps"
+  mkdir -p "$DESKTOP_DIR" "$ICON_DIR"
+  cat > "$DESKTOP_DIR/hybrid.desktop" <<DESKTOPEOF
+[Desktop Entry]
+Name=Hybrid
+Comment=Video Encoding Tool
+Exec=$APPIMAGE
+Icon=hybrid
+Terminal=false
+Type=Application
+Categories=AudioVideo;Video;
+DESKTOPEOF
+  cp "$HERE/hybrid.png" "$ICON_DIR/hybrid.png" 2>/dev/null || true
+fi
 
 # Plattform-Auswahl: Wayland wenn verfügbar, sonst XCB
 if [ -n "${WAYLAND_DISPLAY:-}" ] && \
@@ -242,6 +368,37 @@ export QML2_IMPORT_PATH="$HERE/usr/lib/qt6/qml"
 
 export GIO_MODULE_DIR="$HERE/usr/lib/gio/modules"
 export XDG_DATA_DIRS="$HERE/usr/share:${XDG_DATA_DIRS:-}"
+
+# Bundled VapourSynth (docs 32); vsconfig-write.py must rerun every launch, the AppImage mount path changes each time (section 4.10).
+VS_PYTHON="$HERE/usr/vapoursynth/python"
+if [ -x "$VS_PYTHON/bin/python3" ]; then
+  export PYTHONHOME="$VS_PYTHON"
+  export PYTHONPATH="$VS_PYTHON/lib/python3.14/site-packages"
+  export PATH="$VS_PYTHON/bin:$VS_PYTHON/lib/python3.14/site-packages/vapoursynth:$PATH"
+  "$VS_PYTHON/bin/python3" \
+    "$VS_PYTHON/lib/python3.14/site-packages/vapoursynth/vsconfig-write.py" >/dev/null 2>&1 || true
+fi
+
+# Self-register the .desktop entry + icon so GNOME/desktop shells can resolve Hybrid's own icon for
+# the dock/taskbar - a bare AppImage isn't "installed" anywhere by default (docs 32, 4.15 Runde 24/25).
+# $APPIMAGE (set by the AppImage runtime) is the persistent path to the .AppImage file itself, unlike
+# $HERE which is the ephemeral mount point - rewritten every launch so a moved AppImage stays correct.
+if [ -n "${APPIMAGE:-}" ]; then
+  DESKTOP_DIR="$HOME/.local/share/applications"
+  ICON_DIR="$HOME/.local/share/icons/hicolor/512x512/apps"
+  mkdir -p "$DESKTOP_DIR" "$ICON_DIR"
+  cat > "$DESKTOP_DIR/hybrid.desktop" <<DESKTOPEOF
+[Desktop Entry]
+Name=Hybrid
+Comment=Video Encoding Tool
+Exec=$APPIMAGE
+Icon=hybrid
+Terminal=false
+Type=Application
+Categories=AudioVideo;Video;
+DESKTOPEOF
+  cp "$HERE/hybrid.png" "$ICON_DIR/hybrid.png" 2>/dev/null || true
+fi
 
 # Plattform-Auswahl: Wayland wenn verfügbar, sonst XCB
 if [ -n "${WAYLAND_DISPLAY:-}" ] && \
@@ -298,7 +455,10 @@ export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib32"
 
 # --- Bundle Qt6 libs (Core + DBus + all essentials) ---
 mkdir -p "$APPDIR/usr/lib/qt6/plugins"
-QT_LIB_DIR="/usr/lib"   # Arch default path, adjust if needed
+# pkg-config resolves the real per-distro path (e.g. /usr/lib/x86_64-linux-gnu on Debian/Ubuntu,
+# /usr/lib on Arch) instead of hardcoding one distro's layout - a wrong path here means this whole
+# block silently bundles nothing, since every use below is guarded by an existence check.
+QT_LIB_DIR="$(pkg-config --variable=libdir Qt6Core 2>/dev/null || echo /usr/lib)"
 QT_LIBS=("Qt6Core" "Qt6Gui" "Qt6Widgets" "Qt6Xml" "Qt6Svg" "Qt6Multimedia" \
          "Qt6Network" "Qt6Concurrent" "Qt6OpenGL" "Qt6Qml" "Qt6Quick" \
          "Qt6QuickControls2" "Qt6DBus")
