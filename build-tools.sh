@@ -150,6 +150,7 @@ if [ -x "/usr/bin/apt" ]; then
   libxvidcore-dev \
   libva-dev \
   libvdpau-dev \
+  libsdl2-dev \
   libxml2-dev \
   libfreetype6-dev \
   libfontconfig1-dev \
@@ -894,7 +895,8 @@ then
 
   git clone --depth 1 https://github.com/dubhater/D2VWitch
   git clone --depth 1 --branch release/6.1  https://github.com/FFmpeg/FFmpeg
-  git clone --depth 1 https://github.com/vapoursynth/vapoursynth
+  # R80 (2026-09-16) dropped the classic API-3 VapourSynth.h that D2VWitch's GUIWindow.h still includes (only VapourSynth4.h remains) - R79 is the last tag that has it.
+  git clone --depth 1 --branch R79 https://github.com/vapoursynth/vapoursynth
 
   build_nasm
 
@@ -1153,6 +1155,8 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   git clone --depth 1 https://github.com/ultravideo/kvazaar
   git clone --depth 1 https://github.com/libass/libass
   git clone --depth 1 https://code.videolan.org/videolan/libbluray.git
+  git clone --depth 1 https://code.videolan.org/videolan/libdvdread.git
+  git clone --depth 1 https://code.videolan.org/videolan/libdvdnav.git
   git clone --depth 1 https://github.com/xiph/ogg
   git clone --depth 1 https://github.com/xiph/vorbis
   git clone --depth 1 https://github.com/xiph/theora
@@ -1176,33 +1180,40 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
 
   # Fribidi (Meson)
   old_mkflags="$MAKEFLAGS"; MAKEFLAGS="-j1"
-  build_ffdep fribidi meson "-Ddocs=false"
+  build_ffdep fribidi meson "-Ddocs=false -Dlibdir=lib -Ddefault_library=static"
   MAKEFLAGS="$old_mkflags"
 
   # Harfbuzz (Autotools)
-  build_ffdep harfbuzz autotools "--with-glib=no"
+  build_ffdep harfbuzz autotools "--with-glib=no --disable-shared"
 
   # libbluray (Meson)
   cd libbluray && git submodule init && git submodule update && cd ..
-  build_ffdep libbluray meson "-Dbdj_jar=disabled -Denable_docs=false"
+  build_ffdep libbluray meson "-Dbdj_jar=disabled -Denable_docs=false -Dlibdir=lib -Ddefault_library=static"
+
+  # libdvdread (Meson, no autotools upstream) - needed by libdvdnav and ffmpeg's dvdvideo demuxer; -Dlibdir=lib keeps dvdread.pc visible to PKG_CONFIG_PATH below instead of Meson's Debian-multiarch libdir, which would make pkg-config silently fall back to the system package.
+  build_ffdep libdvdread meson "-Ddefault_library=static -Dlibdir=lib -Dlibdvdcss=disabled -Denable_docs=false"
+  export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+  # libdvdnav (Meson, no autotools upstream) - needs libdvdread's dvdread.pc via PKG_CONFIG_PATH
+  build_ffdep libdvdnav meson "-Ddefault_library=static -Dlibdir=lib -Denable_docs=false -Denable_examples=false"
 
   # kvazaar (Autotools)
-  build_ffdep kvazaar autotools ""
+  build_ffdep kvazaar autotools "--disable-shared"
 
   # libass (Autotools)
-  build_ffdep libass autotools ""
+  build_ffdep libass autotools "--disable-shared"
 
   # Ogg (Autotools)
-  build_ffdep ogg autotools ""
+  build_ffdep ogg autotools "--disable-shared"
 
   # FLAC (Autotools)
-  build_ffdep flac autotools ""
+  build_ffdep flac autotools "--disable-shared"
 
   # Vorbis (Autotools)
-  build_ffdep vorbis autotools ""
+  build_ffdep vorbis autotools "--disable-shared"
 
   # Theora (Autotools)
-  build_ffdep theora autotools ""
+  build_ffdep theora autotools "--disable-shared"
 
   # --- Opus (Autotools) ---
   cd opus
@@ -1351,12 +1362,14 @@ EOF
     --ld="g++" \
     --enable-gpl \
     --enable-version3 \
-    --disable-ffplay \
+    --enable-sdl2 \
     --disable-ffprobe \
     --disable-doc \
     $nvflags \
     --enable-libass \
     --enable-libbluray \
+    --enable-libdvdread \
+    --enable-libdvdnav \
     --enable-libfontconfig \
     --enable-libfreetype \
     --enable-libfribidi \
@@ -1382,6 +1395,7 @@ EOF
     --disable-libjack
   make $MAKEFLAGS
   cp ffmpeg "$base_dir"
+  cp ffplay "$base_dir"
 
   # Versions-Log
   cd "$base_dir"
@@ -1400,6 +1414,14 @@ $(cd build/libass && git rev-parse HEAD)
 
 https://code.videolan.org/videolan/libbluray.git
 $(cd build/libbluray && git rev-parse HEAD)
+
+https://code.videolan.org/videolan/libdvdread.git
+$(cd build/libdvdread && git rev-parse HEAD)
+
+https://code.videolan.org/videolan/libdvdnav.git
+$(cd build/libdvdnav && git rev-parse HEAD)
+
+libsdl2-dev (apt): $(dpkg -s libsdl2-dev 2>/dev/null | grep '^Version:' | cut -d' ' -f2)
 
 https://github.com/xiph/ogg
 $(cd build/ogg && git rev-parse HEAD)
@@ -1450,22 +1472,5 @@ EOL
   rm -rf build
 
   exit 0
-fi
-
-# mplayer / mencoder
-if echo "$args" | grep -q -i -w -E 'all|mencoder|mplayer'
-then
-  echo "building MEncoder/MPlayer,..."
-  cd "$base_dir"
-  rm -rf build
-  svn checkout svn://svn.mplayerhq.hu/mplayer/trunk build
-  cd build
-  git clone --depth 1 --branch "$FFMPEG_VERSION" https://git.ffmpeg.org/ffmpeg.git ffmpeg
-  ./configure --disable-relocatable --enable-runtime-cpudetection
-  make $MAKEFLAGS
-  strip mencoder mplayer
-  cp -f mencoder mplayer ..
-  cd ..
-  rm -rf build
 fi
 

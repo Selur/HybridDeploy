@@ -542,6 +542,15 @@ if [ -f "/lib/x86_64-linux-gnu/libdbus-1.so.3" ]; then
   cp -v --preserve=links /lib/x86_64-linux-gnu/libdbus-1.so.3* "$APPDIR/usr/lib/" || true
 fi
 
+# ffplay links libSDL2 dynamically (build-tools.sh installs libsdl2-dev via apt, docs 35); unlike X11/ALSA/Pulse it isn't a base-desktop library guaranteed on the target machine, so the build machine always resolves it and the generic ldd "not found" scan above never catches it.
+SDL2_LIB=$(ldconfig -p | grep '/libSDL2-2\.0\.so\.0' | awk '{print $NF}' | head -n1 || true)
+if [ -n "$SDL2_LIB" ]; then
+  echo "📦 Bundling $SDL2_LIB for ffplay..."
+  cp -v --preserve=links "$SDL2_LIB"* "$APPDIR/usr/lib/" || true
+else
+  echo "⚠️ libSDL2-2.0.so.0 not found on build host — ffplay will be missing it in the AppImage"
+fi
+
 ICU_VERSION="74"
 ICU_LIBS=("icui18n" "icuuc" "icudata")
 for lib in "${ICU_LIBS[@]}"; do
