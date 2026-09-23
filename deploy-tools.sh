@@ -97,12 +97,20 @@ fi
 VS_PY_BIN="$VS_PYTHON/bin/python3"
 "$VS_PY_BIN" -m ensurepip --upgrade >/dev/null 2>&1 || true
 
-# Packages confirmed to have a working manylinux wheel (docs 4.2/4.9); dghdrtosdr excluded, win_amd64-only, see docs section 7 point 4.
+# Pin the core for every pip call below: R80 dropped API 3, so an unpinned core disables every API3 plugin
+# (dfttest, eedi2, retinex, wnnm, nlm_cuda, bilateralgpu, bm3dcpu/cuda/hip); a package that needs a newer core
+# then resolves to its last compatible release (bestsource 21) instead of upgrading it. Same release as
+# VS_TAG in build-vapoursynth-plugins.sh and the macOS bundle.
+VS_VERSION="79"
+echo "vapoursynth==$VS_VERSION" > "$DEPLOY_DIR/vs-constraints.txt"
+export PIP_CONSTRAINT="$DEPLOY_DIR/vs-constraints.txt"
+
+# Packages confirmed to have a working manylinux wheel (docs 32, 1); dghdrtosdr excluded, win_amd64-only, see docs 32, 1.
 VS_PIP_PACKAGES="
 vapoursynth
 vapoursynth-mvutensils vapoursynth-adaptivegrain vapoursynth-akarin
 vapoursynth-awarp vapoursynth-bestsource vapoursynth-bilateralgpu
-vapoursynth-bm3d vapoursynth-bwdif vapoursynth-cas vapoursynth-cdef
+vapoursynth-bm3d vapoursynth-bm3dcpu vapoursynth-bm3dcuda vapoursynth-bm3dhip vapoursynth-bwdif vapoursynth-cas vapoursynth-cdef
 vapoursynth-cranexpr vapoursynth-d2vsource vapoursynth-dctfilter
 vapoursynth-deblock vapoursynth-decross vapoursynth-dedot vapoursynth-descale
 vapoursynth-descratch vapoursynth-dotkill vapoursynth-edgefixer
@@ -124,7 +132,7 @@ for pkg in $VS_PIP_PACKAGES; do
   "$VS_PY_BIN" -m pip install "$pkg" \
     --extra-index-url https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple/ \
     --disable-pip-version-check -q \
-    || echo "  ⚠️ $pkg failed to install (see docs section 4.9 for known exceptions)"
+    || echo "  ⚠️ $pkg failed to install (see docs 32, 1 for known exceptions)"
 done
 
 echo "  📦 Installing GitHub-release wheels (vinverse, grwrld)..."
@@ -136,14 +144,18 @@ echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
   "vsjetpack @ git+https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack.git@main"
 
+# pip's vspipe entry script carries this build machine's interpreter path as shebang and would shadow the real
+# vspipe (site-packages/vapoursynth, next in AppRun's PATH) - it only works where the build tree still exists.
+rm -f "$VS_PYTHON/bin/vspipe"
+
 VS_SITE="$VS_PYTHON/lib/python3.14/site-packages"
 VS_PLUGDIR="$VS_SITE/vapoursynth/plugins"
 
-echo "  🔧 Building the 8 plugins with no pip wheel (docs section 4.5-4.8)..."
+echo "  🔧 Building the 8 plugins with no pip wheel (docs 32, 1)..."
 "$SCRIPT_DIR/build-vapoursynth-plugins.sh" "$DEPLOY_DIR/vsplugins-build"
 cp "$DEPLOY_DIR"/vsplugins-build/*.so "$VS_PLUGDIR/"
 
-echo "  🔧 Installing vsconfig-write.py (fixes vspipe on python-build-standalone, docs section 4.10)..."
+echo "  🔧 Installing vsconfig-write.py (fixes vspipe on python-build-standalone, docs 32, 2.1)..."
 cp "$SCRIPT_DIR/vsconfig-write.py" "$VS_SITE/vapoursynth/"
 
 if [ ! -d "$VS_DIR/vsscripts/.git" ]; then
@@ -152,7 +164,7 @@ if [ ! -d "$VS_DIR/vsscripts/.git" ]; then
 fi
 
 # GLSL shader sources for the GLSL* color/sharpen filters and the GLSL-Resizers AI upscalers
-# (docs 32, 4.16); two different base paths, matching where Hybrid's own C++ looks for each:
+# (docs 32, 2.6); two different base paths, matching where Hybrid's own C++ looks for each:
 # GLSL/ under the plugins dir (VsFilter::filterLocation), GLSL-Resizers/ next to the binary itself.
 GLSL_CLONE="$DEPLOY_DIR/hybrid-glsl-filters"
 if [ ! -d "$GLSL_CLONE/.git" ]; then
@@ -300,7 +312,7 @@ export QML2_IMPORT_PATH="$HERE/usr/lib/qt6/qml"
 export GIO_MODULE_DIR="$HERE/usr/lib/gio/modules"
 export XDG_DATA_DIRS="$HERE/usr/share:${XDG_DATA_DIRS:-}"
 
-# Bundled VapourSynth (docs 32); vsconfig-write.py must rerun every launch, the AppImage mount path changes each time (section 4.10).
+# Bundled VapourSynth (docs 32); vsconfig-write.py must rerun every launch, the AppImage mount path changes each time (section 2.1).
 VS_PYTHON="$HERE/usr/vapoursynth/python"
 if [ -x "$VS_PYTHON/bin/python3" ]; then
   export PYTHONHOME="$VS_PYTHON"
@@ -311,7 +323,7 @@ if [ -x "$VS_PYTHON/bin/python3" ]; then
 fi
 
 # Self-register the .desktop entry + icon so GNOME/desktop shells can resolve Hybrid's own icon for
-# the dock/taskbar - a bare AppImage isn't "installed" anywhere by default (docs 32, 4.15 Runde 24/25).
+# the dock/taskbar - a bare AppImage isn't "installed" anywhere by default (docs 32, 2.1/2.5).
 # $APPIMAGE (set by the AppImage runtime) is the persistent path to the .AppImage file itself, unlike
 # $HERE which is the ephemeral mount point - rewritten every launch so a moved AppImage stays correct.
 if [ -n "${APPIMAGE:-}" ]; then
@@ -369,7 +381,7 @@ export QML2_IMPORT_PATH="$HERE/usr/lib/qt6/qml"
 export GIO_MODULE_DIR="$HERE/usr/lib/gio/modules"
 export XDG_DATA_DIRS="$HERE/usr/share:${XDG_DATA_DIRS:-}"
 
-# Bundled VapourSynth (docs 32); vsconfig-write.py must rerun every launch, the AppImage mount path changes each time (section 4.10).
+# Bundled VapourSynth (docs 32); vsconfig-write.py must rerun every launch, the AppImage mount path changes each time (section 2.1).
 VS_PYTHON="$HERE/usr/vapoursynth/python"
 if [ -x "$VS_PYTHON/bin/python3" ]; then
   export PYTHONHOME="$VS_PYTHON"
@@ -380,7 +392,7 @@ if [ -x "$VS_PYTHON/bin/python3" ]; then
 fi
 
 # Self-register the .desktop entry + icon so GNOME/desktop shells can resolve Hybrid's own icon for
-# the dock/taskbar - a bare AppImage isn't "installed" anywhere by default (docs 32, 4.15 Runde 24/25).
+# the dock/taskbar - a bare AppImage isn't "installed" anywhere by default (docs 32, 2.1/2.5).
 # $APPIMAGE (set by the AppImage runtime) is the persistent path to the .AppImage file itself, unlike
 # $HERE which is the ephemeral mount point - rewritten every launch so a moved AppImage stays correct.
 if [ -n "${APPIMAGE:-}" ]; then

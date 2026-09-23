@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Hand-writes the VSScript config entry (`vapoursynth config` fails on this interpreter, see docs/32-linux-appimage-vapoursynth.md 4.10); must rerun every launch, the AppImage mount path changes each time.
+# Hand-writes the VSScript config entry (`vapoursynth config` fails on this interpreter, see docs/32-linux-appimage-vapoursynth.md 2.1); must rerun every launch, the AppImage mount path changes each time.
 import os
 import sys
 from pathlib import Path

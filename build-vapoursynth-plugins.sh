@@ -23,15 +23,16 @@ echo "Fetching vapoursynth core wheel (build SDK)..."
 SDK_DIR="$WORK_DIR/sdk"
 mkdir -p "$SDK_DIR"
 
+# Same release as the bundled core (VS_VERSION in deploy-tools.sh), not the newest: R80 dropped API 3.
 VS_WHEEL_URL=$(curl -s "https://pypi.org/pypi/vapoursynth/json" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
-v = d["info"]["version"]
+v = sys.argv[1]
 for u in d["releases"][v]:
     if "manylinux" in u["filename"] and "x86_64" in u["filename"] and "aarch64" not in u["filename"]:
         print(u["url"])
         break
-')
+' "${VS_TAG#R}")
 curl -sL "$VS_WHEEL_URL" -o "$WORK_DIR/vapoursynth-core.whl"
 python3 -c "
 import zipfile
