@@ -155,6 +155,19 @@ echo "  🔧 Building the 8 plugins with no pip wheel (docs 32, 1)..."
 "$SCRIPT_DIR/build-vapoursynth-plugins.sh" "$DEPLOY_DIR/vsplugins-build"
 cp "$DEPLOY_DIR"/vsplugins-build/*.so "$VS_PLUGDIR/"
 
+# open-svpflow (Interframe/SVP and the SVP methods, docs 47): release build, tag and SHA-256 pinned.
+OSVP_TAG="nightly-20260930-baaaaaadcee8"
+OSVP_COMMIT="baaaaaadcee8fb29665716f9d2767a5d9d5ca905"
+OSVP_SHA256="ec37c9bd92ca4ed8cab84f7771b1a2f6481068d599384d72a9f32cacebdb8237"
+echo "  📦 Installing open-svpflow ($OSVP_TAG)..."
+curl -sL -o "$DEPLOY_DIR/open-svpflow.zip" \
+  "https://github.com/Z1xus/open-svpflow/releases/download/${OSVP_TAG}/x86_64-unknown-linux-gnu.zip"
+echo "$OSVP_SHA256  $DEPLOY_DIR/open-svpflow.zip" | sha256sum -c -
+rm -rf "$DEPLOY_DIR/open-svpflow" && "$VS_PY_BIN" -m zipfile -e "$DEPLOY_DIR/open-svpflow.zip" "$DEPLOY_DIR/open-svpflow"
+cp "$DEPLOY_DIR"/open-svpflow/libsvpflow1_vs.so "$DEPLOY_DIR"/open-svpflow/libsvpflow2_vs.so "$VS_PLUGDIR/"
+curl -sL -o "$VS_PLUGDIR/open-svpflow-LICENSE.txt" \
+  "https://raw.githubusercontent.com/Z1xus/open-svpflow/${OSVP_COMMIT}/LICENSE"
+
 echo "  🔧 Installing vsconfig-write.py (fixes vspipe on python-build-standalone, docs 32, 2.1)..."
 cp "$SCRIPT_DIR/vsconfig-write.py" "$VS_SITE/vapoursynth/"
 
