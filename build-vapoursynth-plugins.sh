@@ -46,14 +46,14 @@ if ! grep -q '^libdir=' "$PC_FILE"; then
 fi
 export PKG_CONFIG_PATH="$SDK_DIR/vapoursynth/pkgconfig"
 
-# --- Step 2: fetch the API3 headers (EEDI2, Retinex, DFTTest need them) ----
+# --- Step 2: fetch the API3 headers (EEDI2, DFTTest need them) ----
 echo "Fetching API3 headers ($VS_TAG)..."
 API3_DIR="$WORK_DIR/api3"
 mkdir -p "$API3_DIR/vapoursynth"
 for h in VapourSynth.h VSHelper.h; do
   curl -sL "https://raw.githubusercontent.com/vapoursynth/vapoursynth/$VS_TAG/include/$h" -o "$API3_DIR/$h"
 done
-# Retinex includes <vapoursynth/VapourSynth.h>, so also expose the headers under that subpath.
+# DFTTest includes <vapoursynth/VapourSynth.h>, so also expose the headers under that subpath.
 cp "$API3_DIR"/*.h "$API3_DIR/vapoursynth/"
 
 # --- Helpers -----------------------------------------------------------------
@@ -88,10 +88,10 @@ build_meson FFT3DFilter \
   https://github.com/AmusementClub/VapourSynth-FFT3DFilter.git \
   libfft3dfilter.so
 
+# API 4 port, same namespace and functions as the original
 build_meson Retinex \
-  https://github.com/HomeOfVapourSynthEvolution/VapourSynth-Retinex.git \
-  libretinex.so \
-  "-I$API3_DIR"
+  https://github.com/Selur/VapourSynth-Retinex-api4.git \
+  libretinex.so
 
 build_meson TCanny \
   https://github.com/HomeOfVapourSynthEvolution/VapourSynth-TCanny.git \
