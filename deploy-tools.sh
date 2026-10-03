@@ -98,7 +98,7 @@ VS_PY_BIN="$VS_PYTHON/bin/python3"
 "$VS_PY_BIN" -m ensurepip --upgrade >/dev/null 2>&1 || true
 
 # Pin the core for every pip call below: R80 dropped API 3, so an unpinned core disables every API3 plugin
-# (eedi2, nlm_cuda, bilateralgpu, bm3dcpu/cuda/hip); a package that needs a newer core
+# (nlm_cuda, bilateralgpu, bm3dcpu/cuda/hip); a package that needs a newer core
 # then resolves to its last compatible release (bestsource 21) instead of upgrading it. Same release as
 # VS_TAG in build-vapoursynth-plugins.sh and the macOS bundle.
 VS_VERSION="79"
@@ -169,9 +169,11 @@ else:
   fi
   "$VS_PY_BIN" -m pip install --disable-pip-version-check -q --no-deps "$DEPLOY_DIR/$wheel"
 }
-# neo-minideen (MiniDeenNeo, docs 49), hqdn3d (Selur/vapoursynth-hqdn3d, 8-16 bit integer and GRAY since 1.1)
+# neo-minideen (MiniDeenNeo, docs 49), hqdn3d (Selur/vapoursynth-hqdn3d, 8-16 bit integer and GRAY since 1.1),
+# eedi2 (Selur/VapourSynth-EEDI2, API 4 port of the EEDI2 plugin, same namespace)
 install_latest_release_wheel neo-minideen Selur/MiniDeenNeo
 install_latest_release_wheel hqdn3d Selur/vapoursynth-hqdn3d
+install_latest_release_wheel eedi2 Selur/VapourSynth-EEDI2
 
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the 7 VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
+# Builds the 6 VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
 # Usage: ./build-vapoursynth-plugins.sh [output-dir]  ->  <output-dir>/*.so
 
 set -euo pipefail
@@ -46,16 +46,6 @@ if ! grep -q '^libdir=' "$PC_FILE"; then
 fi
 export PKG_CONFIG_PATH="$SDK_DIR/vapoursynth/pkgconfig"
 
-# --- Step 2: fetch the API3 headers (EEDI2 needs them) ----
-echo "Fetching API3 headers ($VS_TAG)..."
-API3_DIR="$WORK_DIR/api3"
-mkdir -p "$API3_DIR/vapoursynth"
-for h in VapourSynth.h VSHelper.h; do
-  curl -sL "https://raw.githubusercontent.com/vapoursynth/vapoursynth/$VS_TAG/include/$h" -o "$API3_DIR/$h"
-done
-# Also expose the headers under the <vapoursynth/...> subpath.
-cp "$API3_DIR"/*.h "$API3_DIR/vapoursynth/"
-
 # --- Helpers -----------------------------------------------------------------
 
 # build_meson <name> <git-url> <so-filename-in-build-dir> [extra CXXFLAGS] [branch]
@@ -78,11 +68,6 @@ build_meson() {
 build_meson AddGrain \
   https://github.com/HomeOfVapourSynthEvolution/VapourSynth-AddGrain.git \
   libaddgrain.so
-
-build_meson EEDI2 \
-  https://github.com/HomeOfVapourSynthEvolution/VapourSynth-EEDI2.git \
-  libeedi2.so \
-  "-I$API3_DIR"
 
 # API 4 port, same namespace and functions as the original
 build_meson Retinex \
