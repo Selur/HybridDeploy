@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the 8 VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
+# Builds the 6 VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
 # Usage: ./build-vapoursynth-plugins.sh [output-dir]  ->  <output-dir>/*.so
 
 set -euo pipefail
@@ -46,7 +46,7 @@ if ! grep -q '^libdir=' "$PC_FILE"; then
 fi
 export PKG_CONFIG_PATH="$SDK_DIR/vapoursynth/pkgconfig"
 
-# --- Step 2: fetch the API3 headers (EEDI2, DFTTest need them) ----
+# --- Step 2: fetch the API3 headers (EEDI2 needs them) ----
 echo "Fetching API3 headers ($VS_TAG)..."
 API3_DIR="$WORK_DIR/api3"
 mkdir -p "$API3_DIR/vapoursynth"
@@ -84,10 +84,6 @@ build_meson EEDI2 \
   libeedi2.so \
   "-I$API3_DIR"
 
-build_meson FFT3DFilter \
-  https://github.com/AmusementClub/VapourSynth-FFT3DFilter.git \
-  libfft3dfilter.so
-
 # API 4 port, same namespace and functions as the original
 build_meson Retinex \
   https://github.com/Selur/VapourSynth-Retinex-api4.git \
@@ -96,11 +92,6 @@ build_meson Retinex \
 build_meson TCanny \
   https://github.com/HomeOfVapourSynthEvolution/VapourSynth-TCanny.git \
   libtcanny.so
-
-build_meson DFTTest \
-  https://github.com/HomeOfVapourSynthEvolution/VapourSynth-DFTTest.git \
-  libdfttest.so \
-  "-I$API3_DIR"
 
 # --- Step 4: RemoveDirt (cmake, vendors its own API4 headers) --------------
 

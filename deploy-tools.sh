@@ -154,9 +154,20 @@ rm -f "$VS_PYTHON/bin/vspipe"
 VS_SITE="$VS_PYTHON/lib/python3.14/site-packages"
 VS_PLUGDIR="$VS_SITE/vapoursynth/plugins"
 
-echo "  🔧 Building the 8 plugins with no pip wheel (docs 32, 1)..."
+echo "  🔧 Building the 6 plugins with no pip wheel (docs 32, 1)..."
 "$SCRIPT_DIR/build-vapoursynth-plugins.sh" "$DEPLOY_DIR/vsplugins-build"
 cp "$DEPLOY_DIR"/vsplugins-build/*.so "$VS_PLUGDIR/"
+
+# neo-fft (neo_fft, API 4, docs 44): release build, SHA-256 pinned; the .so needs GLIBC_2.43 from the host.
+NEOFFT_VERSION="0.9.0"
+NEOFFT_SHA256="bb862549d57721d0fe258fc735c58dbcdf21d75a0953fc68bba9e27ef71dee00"
+echo "  📦 Installing neo-fft ($NEOFFT_VERSION)..."
+curl -sL -o "$DEPLOY_DIR/neo-fft.zip" \
+  "https://github.com/HomeOfAviSynthPlusEvolution/neo-fft/releases/download/${NEOFFT_VERSION}/neo-fft-${NEOFFT_VERSION}-linux-x64.zip"
+echo "$NEOFFT_SHA256  $DEPLOY_DIR/neo-fft.zip" | sha256sum -c -
+rm -rf "$DEPLOY_DIR/neo-fft" && "$VS_PY_BIN" -m zipfile -e "$DEPLOY_DIR/neo-fft.zip" "$DEPLOY_DIR/neo-fft"
+cp "$DEPLOY_DIR/neo-fft/neo-fft-${NEOFFT_VERSION}-linux-x64/neo-fft.so" "$VS_PLUGDIR/"
+cp "$DEPLOY_DIR/neo-fft/neo-fft-${NEOFFT_VERSION}-linux-x64/LICENSE" "$VS_PLUGDIR/neo-fft-LICENSE.txt"
 
 echo "  🔧 Installing vsconfig-write.py (fixes vspipe on python-build-standalone, docs 32, 2.1)..."
 cp "$SCRIPT_DIR/vsconfig-write.py" "$VS_SITE/vapoursynth/"
