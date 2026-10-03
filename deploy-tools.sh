@@ -143,12 +143,26 @@ echo "  📦 Installing GitHub-release wheels (vinverse, grwrld)..."
   "https://github.com/Asd-g/vinverse/releases/download/0.9.6/vapoursynth_vinverse-0.9.6-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl" \
   "https://github.com/Asd-g/AviSynthPlus-grayworld/releases/download/1.0.4/vapoursynth_grwrld-1.0.4-py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
 
-# neo-minideen (MiniDeenNeo, API 4, docs 49): release wheel, SHA-256 pinned (x86_64 only, no Linux arm64 wheel).
-NEOMINIDEEN_WHEEL="vapoursynth_neo_minideen-1.0-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl"
-NEOMINIDEEN_SHA256="38ca34893c3fbd5acce968cdadd1a7bef4e1bd8c23dad6f74219d45827bd6f68"
-echo "  📦 Installing neo-minideen..."
-curl -sL -o "$DEPLOY_DIR/$NEOMINIDEEN_WHEEL" "https://github.com/Selur/MiniDeenNeo/releases/download/v1.0/$NEOMINIDEEN_WHEEL"
-echo "$NEOMINIDEEN_SHA256  $DEPLOY_DIR/$NEOMINIDEEN_WHEEL" | sha256sum -c -
+# neo-minideen (MiniDeenNeo, API 4, docs 49): always the latest GitHub release (x86_64 only, no Linux arm64 wheel).
+# Tag, wheel URL and SHA-256 come from the release API; the wheel file name keeps the version of its own metadata
+# (v1.1 still ships *-1.0-*.whl), so it is picked by platform, not by name.
+echo "  📦 Installing neo-minideen (latest release)..."
+NEOMINIDEEN_INFO=$(curl -sfL https://api.github.com/repos/Selur/MiniDeenNeo/releases/latest | "$VS_PY_BIN" -c '
+import json, sys
+d = json.load(sys.stdin)
+for a in d["assets"]:
+    n = a["name"]
+    if n.endswith(".whl") and "manylinux" in n and "x86_64" in n:
+        print(d["tag_name"], a["browser_download_url"], a.get("digest", "").removeprefix("sha256:"), n)
+        break
+else:
+    sys.exit("no manylinux x86_64 wheel in the latest MiniDeenNeo release")
+')
+read -r NEOMINIDEEN_TAG NEOMINIDEEN_URL NEOMINIDEEN_SHA256 NEOMINIDEEN_WHEEL <<< "$NEOMINIDEEN_INFO"
+[ -n "$NEOMINIDEEN_WHEEL" ] || { echo "  ❌ could not resolve the latest neo-minideen release"; exit 1; }
+echo "     $NEOMINIDEEN_TAG ($NEOMINIDEEN_WHEEL)"
+curl -sfL -o "$DEPLOY_DIR/$NEOMINIDEEN_WHEEL" "$NEOMINIDEEN_URL"
+[ -n "$NEOMINIDEEN_SHA256" ] && echo "$NEOMINIDEEN_SHA256  $DEPLOY_DIR/$NEOMINIDEEN_WHEEL" | sha256sum -c -
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q --no-deps "$DEPLOY_DIR/$NEOMINIDEEN_WHEEL"
 
 echo "  📦 Installing vsjetpack from git..."
