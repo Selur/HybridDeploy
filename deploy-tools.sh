@@ -143,6 +143,14 @@ echo "  📦 Installing GitHub-release wheels (vinverse, grwrld)..."
   "https://github.com/Asd-g/vinverse/releases/download/0.9.6/vapoursynth_vinverse-0.9.6-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl" \
   "https://github.com/Asd-g/AviSynthPlus-grayworld/releases/download/1.0.4/vapoursynth_grwrld-1.0.4-py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
 
+# neo-minideen (MiniDeenNeo, API 4, docs 49): release wheel, SHA-256 pinned (x86_64 only, no Linux arm64 wheel).
+NEOMINIDEEN_WHEEL="vapoursynth_neo_minideen-1.0-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl"
+NEOMINIDEEN_SHA256="38ca34893c3fbd5acce968cdadd1a7bef4e1bd8c23dad6f74219d45827bd6f68"
+echo "  📦 Installing neo-minideen..."
+curl -sL -o "$DEPLOY_DIR/$NEOMINIDEEN_WHEEL" "https://github.com/Selur/MiniDeenNeo/releases/download/v1.0/$NEOMINIDEEN_WHEEL"
+echo "$NEOMINIDEEN_SHA256  $DEPLOY_DIR/$NEOMINIDEEN_WHEEL" | sha256sum -c -
+"$VS_PY_BIN" -m pip install --disable-pip-version-check -q --no-deps "$DEPLOY_DIR/$NEOMINIDEEN_WHEEL"
+
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
   "vsjetpack @ git+https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack.git@main"
