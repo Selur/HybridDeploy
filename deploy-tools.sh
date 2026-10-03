@@ -143,11 +143,14 @@ echo "  📦 Installing GitHub-release wheels (vinverse, grwrld)..."
   "https://github.com/Asd-g/vinverse/releases/download/0.9.6/vapoursynth_vinverse-0.9.6-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl" \
   "https://github.com/Asd-g/AviSynthPlus-grayworld/releases/download/1.0.4/vapoursynth_grwrld-1.0.4-py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
 
-# neo-minideen (MiniDeenNeo, API 4, docs 49): always the latest GitHub release (x86_64 only, no Linux arm64 wheel).
-# Tag, wheel URL and SHA-256 come from the release API; the wheel file name keeps the version of its own metadata
-# (v1.1 still ships *-1.0-*.whl), so it is picked by platform, not by name.
-echo "  📦 Installing neo-minideen (latest release)..."
-NEOMINIDEEN_INFO=$(curl -sfL https://api.github.com/repos/Selur/MiniDeenNeo/releases/latest | "$VS_PY_BIN" -c '
+# Own plugins with GitHub release wheels (API 4, x86_64 only here): always the latest release.
+# Tag, wheel URL and SHA-256 come from the release API; the wheel is picked by platform (manylinux x86_64), not by name,
+# because a release can keep the version of its metadata in the file name (MiniDeenNeo v1.1 ships *-1.0-*.whl).
+# install_latest_release_wheel <label> <owner/repo>
+install_latest_release_wheel() {
+  local label="$1" repo="$2" info tag url sha wheel
+  echo "  📦 Installing $label (latest release of $repo)..."
+  info=$(curl -sfL "https://api.github.com/repos/$repo/releases/latest" | "$VS_PY_BIN" -c '
 import json, sys
 d = json.load(sys.stdin)
 for a in d["assets"]:
@@ -156,14 +159,19 @@ for a in d["assets"]:
         print(d["tag_name"], a["browser_download_url"], a.get("digest", "").removeprefix("sha256:"), n)
         break
 else:
-    sys.exit("no manylinux x86_64 wheel in the latest MiniDeenNeo release")
-')
-read -r NEOMINIDEEN_TAG NEOMINIDEEN_URL NEOMINIDEEN_SHA256 NEOMINIDEEN_WHEEL <<< "$NEOMINIDEEN_INFO"
-[ -n "$NEOMINIDEEN_WHEEL" ] || { echo "  ❌ could not resolve the latest neo-minideen release"; exit 1; }
-echo "     $NEOMINIDEEN_TAG ($NEOMINIDEEN_WHEEL)"
-curl -sfL -o "$DEPLOY_DIR/$NEOMINIDEEN_WHEEL" "$NEOMINIDEEN_URL"
-[ -n "$NEOMINIDEEN_SHA256" ] && echo "$NEOMINIDEEN_SHA256  $DEPLOY_DIR/$NEOMINIDEEN_WHEEL" | sha256sum -c -
-"$VS_PY_BIN" -m pip install --disable-pip-version-check -q --no-deps "$DEPLOY_DIR/$NEOMINIDEEN_WHEEL"
+    sys.exit("no manylinux x86_64 wheel in the latest release")
+') || { echo "  ❌ could not resolve the latest $label release"; exit 1; }
+  read -r tag url sha wheel <<< "$info"
+  echo "     $tag ($wheel)"
+  curl -sfL -o "$DEPLOY_DIR/$wheel" "$url" || { echo "  ❌ download of $wheel failed"; exit 1; }
+  if [ -n "$sha" ]; then
+    echo "$sha  $DEPLOY_DIR/$wheel" | sha256sum -c - || exit 1
+  fi
+  "$VS_PY_BIN" -m pip install --disable-pip-version-check -q --no-deps "$DEPLOY_DIR/$wheel"
+}
+# neo-minideen (MiniDeenNeo, docs 49), hqdn3d (Selur/vapoursynth-hqdn3d, 8-16 bit integer and GRAY since 1.1)
+install_latest_release_wheel neo-minideen Selur/MiniDeenNeo
+install_latest_release_wheel hqdn3d Selur/vapoursynth-hqdn3d
 
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
@@ -176,7 +184,7 @@ rm -f "$VS_PYTHON/bin/vspipe"
 VS_SITE="$VS_PYTHON/lib/python3.14/site-packages"
 VS_PLUGDIR="$VS_SITE/vapoursynth/plugins"
 
-echo "  🔧 Building the 8 plugins with no pip wheel (docs 32, 1)..."
+echo "  🔧 Building the 7 plugins with no pip wheel (docs 32, 1)..."
 "$SCRIPT_DIR/build-vapoursynth-plugins.sh" "$DEPLOY_DIR/vsplugins-build"
 cp "$DEPLOY_DIR"/vsplugins-build/*.so "$VS_PLUGDIR/"
 

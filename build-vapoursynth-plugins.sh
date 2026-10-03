@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the 8 VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
+# Builds the 7 VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
 # Usage: ./build-vapoursynth-plugins.sh [output-dir]  ->  <output-dir>/*.so
 
 set -euo pipefail
@@ -88,11 +88,6 @@ build_meson EEDI2 \
 build_meson Retinex \
   https://github.com/Selur/VapourSynth-Retinex-api4.git \
   libretinex.so
-
-# API 4 port (Meson), same namespace and functions as the original
-build_meson HQDN3D \
-  https://github.com/Selur/vapoursynth-hqdn3d.git \
-  libhqdn3d.so
 
 build_meson TCanny \
   https://github.com/HomeOfVapourSynthEvolution/VapourSynth-TCanny.git \
