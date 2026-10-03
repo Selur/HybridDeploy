@@ -98,7 +98,7 @@ VS_PY_BIN="$VS_PYTHON/bin/python3"
 "$VS_PY_BIN" -m ensurepip --upgrade >/dev/null 2>&1 || true
 
 # Pin the core for every pip call below: R80 dropped API 3, so an unpinned core disables every API3 plugin
-# (eedi2, wnnm, nlm_cuda, bilateralgpu, bm3dcpu/cuda/hip); a package that needs a newer core
+# (eedi2, nlm_cuda, bilateralgpu, bm3dcpu/cuda/hip); a package that needs a newer core
 # then resolves to its last compatible release (bestsource 21) instead of upgrading it. Same release as
 # VS_TAG in build-vapoursynth-plugins.sh and the macOS bundle.
 VS_VERSION="79"
@@ -125,7 +125,7 @@ vapoursynth-nlm-ispc vapoursynth-resize2 vapoursynth-sangnom
 vapoursynth-scenechange vapoursynth-sneedif vapoursynth-subtext
 vapoursynth-timecube vapoursynth-vivtc vapoursynth-tivtc
 vapoursynth-bifrost vapoursynth-vszip vapoursynth-vszipcu
-vapoursynth-vszipcl vapoursynth-wnnm vapoursynth-zit vapoursynth-znedi3
+vapoursynth-vszipcl vapoursynth-zit vapoursynth-znedi3
 vapoursynth-zsmooth vapoursynth-oxidctf vapoursynth-composite
 vapoursynth-interlace vs-placebo vsnoise
 open-svpflow==0.1.0
