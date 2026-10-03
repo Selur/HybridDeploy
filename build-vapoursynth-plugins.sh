@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the 6 VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
+# Builds the 8 VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
 # Usage: ./build-vapoursynth-plugins.sh [output-dir]  ->  <output-dir>/*.so
 
 set -euo pipefail
@@ -53,17 +53,17 @@ mkdir -p "$API3_DIR/vapoursynth"
 for h in VapourSynth.h VSHelper.h; do
   curl -sL "https://raw.githubusercontent.com/vapoursynth/vapoursynth/$VS_TAG/include/$h" -o "$API3_DIR/$h"
 done
-# DFTTest includes <vapoursynth/VapourSynth.h>, so also expose the headers under that subpath.
+# Also expose the headers under the <vapoursynth/...> subpath.
 cp "$API3_DIR"/*.h "$API3_DIR/vapoursynth/"
 
 # --- Helpers -----------------------------------------------------------------
 
-# build_meson <name> <git-url> <so-filename-in-build-dir> [extra CXXFLAGS]
+# build_meson <name> <git-url> <so-filename-in-build-dir> [extra CXXFLAGS] [branch]
 build_meson() {
-  local name="$1" url="$2" so_name="$3" extra_cxxflags="${4:-}"
+  local name="$1" url="$2" so_name="$3" extra_cxxflags="${4:-}" branch="${5:-}"
   echo "=== Building $name (meson) ==="
   local src="$WORK_DIR/$name"
-  git clone --depth 1 "$url" "$src"
+  git clone --depth 1 ${branch:+--branch "$branch"} "$url" "$src"
   (
     cd "$src"
     CXXFLAGS="$extra_cxxflags" meson setup build
@@ -73,7 +73,7 @@ build_meson() {
   echo "-> $OUT_DIR/$so_name"
 }
 
-# --- Step 3: build the six meson-based plugins ------------------------------
+# --- Step 3: build the meson-based plugins ------------------------------
 
 build_meson AddGrain \
   https://github.com/HomeOfVapourSynthEvolution/VapourSynth-AddGrain.git \
@@ -89,9 +89,30 @@ build_meson Retinex \
   https://github.com/Selur/VapourSynth-Retinex-api4.git \
   libretinex.so
 
+# API 4 port (Meson), same namespace and functions as the original
+build_meson HQDN3D \
+  https://github.com/Selur/vapoursynth-hqdn3d.git \
+  libhqdn3d.so
+
 build_meson TCanny \
   https://github.com/HomeOfVapourSynthEvolution/VapourSynth-TCanny.git \
   libtcanny.so
+
+# --- Step 3b: neo-fft (cmake; replaces FFT3DFilter and DFTTest) -------------
+# Built from the tag, not taken from the release zip: the release .so is built on glibc 2.43 and needs GLIBC_2.43,
+# a source build links against the build host's glibc (2.32 on Ubuntu 24.04). Dependencies (dualsynth2, highway,
+# pocketfft) are pinned by commit in the tag's cmake/Dependencies.cmake and fetched at configure time.
+NEO_FFT_TAG="0.9.0"
+echo "=== Building neo-fft $NEO_FFT_TAG (cmake) ==="
+NF_SRC="$WORK_DIR/neo-fft"
+git clone --depth 1 --branch "$NEO_FFT_TAG" https://github.com/HomeOfAviSynthPlusEvolution/neo-fft.git "$NF_SRC"
+(
+  cd "$NF_SRC"
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DNEO_FFT_BUILD_AVISYNTH=OFF
+  cmake --build build --target neo_fft -j"$JOBS"
+)
+cp "$NF_SRC/build/neo-fft.so" "$OUT_DIR/"
+echo "-> $OUT_DIR/neo-fft.so"
 
 # --- Step 4: RemoveDirt (cmake, vendors its own API4 headers) --------------
 
