@@ -806,6 +806,27 @@ EOL
   rm -rf build
 fi
 
+### vvencapp
+if echo "$args" | grep -q -i -w -E 'all|vvenc'
+then
+  echo "building vvencapp,..."
+  cd "$base_dir"
+  rm -rf build
+  # master, not a release tag: 1.14.0 rejects --refreshtype idr_no_radl (docs 51)
+  git clone --depth 1 https://github.com/fraunhoferhhi/vvenc.git build
+  cd build
+  cmake -S . -B build-vvenc -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DVVENC_ENABLE_LINK_TIME_OPT=ON
+  cmake --build build-vvenc --target vvencapp -j"$(nproc)"
+  strip bin/release-static/vvencapp 2>/dev/null || true
+  cp -f "$(find . -name vvencapp -type f -perm -u+x | head -n1)" "$base_dir/vvencapp"
+  cd "$base_dir"
+  cat <<EOL >vvencapp-sources.txt
+https://github.com/fraunhoferhhi/vvenc
+$(cd build && git rev-parse HEAD)
+EOL
+  rm -rf build
+fi
+
 ### mediainfo
 if echo "$args" | grep -q -i -w -E 'all|mediainfo'
 then

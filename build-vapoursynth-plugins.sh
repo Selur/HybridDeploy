@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the 12 VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
+# Builds the VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
 # Usage: ./build-vapoursynth-plugins.sh [output-dir]  ->  <output-dir>/*.so
 
 set -euo pipefail
@@ -46,7 +46,7 @@ if ! grep -q '^libdir=' "$PC_FILE"; then
 fi
 export PKG_CONFIG_PATH="$SDK_DIR/vapoursynth/pkgconfig"
 
-# --- Step 2: the API 3 headers (DeblockPP7, FrFun7, ReduceFlicker; the pip wheel only ships VapourSynth4.h) ----
+# --- Step 2: the API 3 headers (DeblockPP7, FrFun7; the pip wheel only ships VapourSynth4.h) ----
 echo "Fetching API3 headers ($VS_TAG)..."
 API3_DIR="$WORK_DIR/api3"
 mkdir -p "$API3_DIR/vapoursynth"
@@ -89,24 +89,11 @@ build_meson TCanny \
   libtcanny.so
 
 # --- Step 3a: plugins without a wheel, filters that had no Linux build before (docs 32, 6) ----------------
-# API 3 plugins (R79 loads them): DeblockPP7, DeJitter (own header), FrFun7, ReduceFlicker.
+# API 3 plugins (R79 loads them): DeblockPP7, FrFun7. DeJitter (vcm) and ReduceFlicker come as API 4 wheels from deploy-tools.sh.
 build_meson DeblockPP7 \
   https://github.com/HomeOfVapourSynthEvolution/VapourSynth-DeblockPP7.git \
   libdeblockpp7.so \
   "-I$API3_DIR"
-
-# AmusementClub fork with meson and Unix support; the file is libvcmod.so, Hybrid loads libvcm
-build_meson vcm \
-  https://github.com/AmusementClub/vcm.git \
-  libvcmod.so \
-  "" mod . libvcm.so
-
-# AmusementClub fork (namespace rdfl, same as Hybrid calls); the plugin sits in the vapoursynth/ subfolder.
-# Not VFR-maniac/VapourSynth-ReduceFlicker: that one registers 'reduceflicker'.
-build_meson ReduceFlicker \
-  https://github.com/AmusementClub/ReduceFlicker.git \
-  libReduceFlicker.so \
-  "-I$API3_DIR" "" vapoursynth
 
 build_meson Frfun7 \
   https://github.com/dubhatervapoursynth/vapoursynth-frfun7.git \

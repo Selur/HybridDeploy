@@ -176,6 +176,10 @@ install_latest_release_wheel neo-minideen Selur/MiniDeenNeo
 install_latest_release_wheel hqdn3d Selur/vapoursynth-hqdn3d
 install_latest_release_wheel eedi2 Selur/VapourSynth-EEDI2
 install_latest_release_wheel neo-vague-denoiser Selur/neo_Vague_Denoiser
+# vcm (DeJitter, Selur/vcm v1.0.1: API 4 port that fixes jmax = 0) and ReduceFlicker (Selur/ReduceFlicker v1.0.2: API 4 port, runs 12 bit);
+# both wheels put libvcm.so / libReduceFlicker.so into vapoursynth/plugins, same namespaces (vcm, rdfl) as the API 3 builds they replace
+install_latest_release_wheel vcm Selur/vcm
+install_latest_release_wheel ReduceFlicker Selur/ReduceFlicker
 
 # smoothuv (RainbowSmooth, docs 32, 6): API 4 port from AliceTeaParty/vapoursynth-api4-wheels, a third-party repo, so URL and SHA-256 are pinned.
 # The wheel also ships a RainbowSmooth.py without Hybrid's `tools` argument; Hybrid's vsscripts come first in sys.path, the copy is deleted anyway.
