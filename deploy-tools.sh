@@ -170,10 +170,23 @@ else:
   "$VS_PY_BIN" -m pip install --disable-pip-version-check -q --no-deps "$DEPLOY_DIR/$wheel"
 }
 # neo-minideen (MiniDeenNeo, docs 49), hqdn3d (Selur/vapoursynth-hqdn3d, 8-16 bit integer and GRAY since 1.1),
-# eedi2 (Selur/VapourSynth-EEDI2, API 4 port of the EEDI2 plugin, same namespace)
+# eedi2 (Selur/VapourSynth-EEDI2, API 4 port of the EEDI2 plugin, same namespace),
+# neo-vague-denoiser (Selur/neo_Vague_Denoiser, API 4, namespace neo_vd, docs 52)
 install_latest_release_wheel neo-minideen Selur/MiniDeenNeo
 install_latest_release_wheel hqdn3d Selur/vapoursynth-hqdn3d
 install_latest_release_wheel eedi2 Selur/VapourSynth-EEDI2
+install_latest_release_wheel neo-vague-denoiser Selur/neo_Vague_Denoiser
+
+# smoothuv (RainbowSmooth, docs 32, 6): API 4 port from AliceTeaParty/vapoursynth-api4-wheels, a third-party repo, so URL and SHA-256 are pinned.
+# The wheel also ships a RainbowSmooth.py without Hybrid's `tools` argument; Hybrid's vsscripts come first in sys.path, the copy is deleted anyway.
+SMOOTHUV_WHEEL="vapoursynth_smoothuv-3.1-py3-none-manylinux_2_27_x86_64.whl"
+SMOOTHUV_URL="https://github.com/AliceTeaParty/vapoursynth-api4-wheels/releases/download/vapoursynth-smoothuv-v3.1/$SMOOTHUV_WHEEL"
+SMOOTHUV_SHA256="8a2dd7a7aaf76751eb037cb77a6b45479dbdd1e01676738792a7973ff957eb68"
+echo "  📦 Installing smoothuv 3.1..."
+curl -sfL -o "$DEPLOY_DIR/$SMOOTHUV_WHEEL" "$SMOOTHUV_URL" || { echo "  ❌ download of $SMOOTHUV_WHEEL failed"; exit 1; }
+echo "$SMOOTHUV_SHA256  $DEPLOY_DIR/$SMOOTHUV_WHEEL" | sha256sum -c - || exit 1
+"$VS_PY_BIN" -m pip install --disable-pip-version-check -q --no-deps "$DEPLOY_DIR/$SMOOTHUV_WHEEL"
+rm -f "$VS_PYTHON/lib/python3.14/site-packages/RainbowSmooth.py"
 
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
@@ -186,7 +199,7 @@ rm -f "$VS_PYTHON/bin/vspipe"
 VS_SITE="$VS_PYTHON/lib/python3.14/site-packages"
 VS_PLUGDIR="$VS_SITE/vapoursynth/plugins"
 
-echo "  🔧 Building the 7 plugins with no pip wheel (docs 32, 1)..."
+echo "  🔧 Building the 12 plugins with no pip wheel (docs 32, 1)..."
 "$SCRIPT_DIR/build-vapoursynth-plugins.sh" "$DEPLOY_DIR/vsplugins-build"
 cp "$DEPLOY_DIR"/vsplugins-build/*.so "$VS_PLUGDIR/"
 

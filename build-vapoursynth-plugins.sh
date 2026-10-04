@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the 6 VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
+# Builds the 12 VapourSynth plugins with no pip wheel, for the Linux AppImage bundle (Hybrid/docs/32-linux-appimage-vapoursynth.md).
 # Usage: ./build-vapoursynth-plugins.sh [output-dir]  ->  <output-dir>/*.so
 
 set -euo pipefail
@@ -46,21 +46,31 @@ if ! grep -q '^libdir=' "$PC_FILE"; then
 fi
 export PKG_CONFIG_PATH="$SDK_DIR/vapoursynth/pkgconfig"
 
+# --- Step 2: the API 3 headers (DeblockPP7, FrFun7, ReduceFlicker; the pip wheel only ships VapourSynth4.h) ----
+echo "Fetching API3 headers ($VS_TAG)..."
+API3_DIR="$WORK_DIR/api3"
+mkdir -p "$API3_DIR/vapoursynth"
+for h in VapourSynth.h VSHelper.h; do
+  curl -sL "https://raw.githubusercontent.com/vapoursynth/vapoursynth/$VS_TAG/include/$h" -o "$API3_DIR/$h"
+done
+# Also expose the headers under the <vapoursynth/...> subpath.
+cp "$API3_DIR"/*.h "$API3_DIR/vapoursynth/"
+
 # --- Helpers -----------------------------------------------------------------
 
-# build_meson <name> <git-url> <so-filename-in-build-dir> [extra CXXFLAGS] [branch]
+# build_meson <name> <git-url> <so-filename-in-build-dir> [extra CXXFLAGS] [branch-or-tag] [subdir-with-meson.build] [installed-filename] [extra meson args]
 build_meson() {
-  local name="$1" url="$2" so_name="$3" extra_cxxflags="${4:-}" branch="${5:-}"
+  local name="$1" url="$2" so_name="$3" extra_cxxflags="${4:-}" branch="${5:-}" subdir="${6:-.}" dest_name="${7:-$3}" meson_args="${8:-}"
   echo "=== Building $name (meson) ==="
   local src="$WORK_DIR/$name"
   git clone --depth 1 ${branch:+--branch "$branch"} "$url" "$src"
   (
-    cd "$src"
-    CXXFLAGS="$extra_cxxflags" meson setup build
+    cd "$src/$subdir"
+    CXXFLAGS="$extra_cxxflags" meson setup build $meson_args
     ninja -C build -j"$JOBS"
   )
-  cp "$src/build/$so_name" "$OUT_DIR/"
-  echo "-> $OUT_DIR/$so_name"
+  cp "$src/$subdir/build/$so_name" "$OUT_DIR/$dest_name"
+  echo "-> $OUT_DIR/$dest_name"
 }
 
 # --- Step 3: build the meson-based plugins ------------------------------
@@ -77,6 +87,49 @@ build_meson Retinex \
 build_meson TCanny \
   https://github.com/HomeOfVapourSynthEvolution/VapourSynth-TCanny.git \
   libtcanny.so
+
+# --- Step 3a: plugins without a wheel, filters that had no Linux build before (docs 32, 6) ----------------
+# API 3 plugins (R79 loads them): DeblockPP7, DeJitter (own header), FrFun7, ReduceFlicker.
+build_meson DeblockPP7 \
+  https://github.com/HomeOfVapourSynthEvolution/VapourSynth-DeblockPP7.git \
+  libdeblockpp7.so \
+  "-I$API3_DIR"
+
+# AmusementClub fork with meson and Unix support; the file is libvcmod.so, Hybrid loads libvcm
+build_meson vcm \
+  https://github.com/AmusementClub/vcm.git \
+  libvcmod.so \
+  "" mod . libvcm.so
+
+# AmusementClub fork (namespace rdfl, same as Hybrid calls); the plugin sits in the vapoursynth/ subfolder.
+# Not VFR-maniac/VapourSynth-ReduceFlicker: that one registers 'reduceflicker'.
+build_meson ReduceFlicker \
+  https://github.com/AmusementClub/ReduceFlicker.git \
+  libReduceFlicker.so \
+  "-I$API3_DIR" "" vapoursynth
+
+build_meson Frfun7 \
+  https://github.com/dubhatervapoursynth/vapoursynth-frfun7.git \
+  libfrfun7.so \
+  "-I$API3_DIR" v2
+
+# Bore (API 4, GPL-3): GSL is linked statically so the bundle needs no libgsl; the distro libgsl.a is not PIC,
+# so GSL is built from the tarball with --with-pic.
+GSL_VERSION="2.8"
+echo "=== Building GSL $GSL_VERSION (static, PIC, for Bore) ==="
+GSL_SRC="$WORK_DIR/gsl-$GSL_VERSION"
+curl -sfL "https://ftpmirror.gnu.org/gnu/gsl/gsl-$GSL_VERSION.tar.gz" | tar -xz -C "$WORK_DIR"
+GSL_PREFIX="$WORK_DIR/gsl-prefix"
+(
+  cd "$GSL_SRC"
+  ./configure --prefix="$GSL_PREFIX" --disable-shared --enable-static --with-pic -q
+  make -j"$JOBS" -s
+  make install -s
+)
+PKG_CONFIG_PATH="$GSL_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH" build_meson Bore \
+  https://github.com/OpusGang/bore.git \
+  libbore.so \
+  "" "" . libbore.so "-Dstatic_gsl=true"
 
 # --- Step 3b: neo-fft (cmake; replaces FFT3DFilter and DFTTest) -------------
 # Built from the tag, not taken from the release zip: the release .so is built on glibc 2.43 and needs GLIBC_2.43,
