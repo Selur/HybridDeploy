@@ -119,10 +119,10 @@ vapoursynth-descratch vapoursynth-dotkill vapoursynth-edgefixer
 vapoursynth-edgemasks vapoursynth-eedi3 vapoursynth-eedi3vk2
 vapoursynth-fillborders vapoursynth-ffms2 vapoursynth-fmtconv
 vapoursynth-hysteresis vapoursynth-iscombed vapoursynth-knlmeanscl
-vapoursynth-lsmas
+vapoursynth-lsmas vapoursynth-readmpls
 vapoursynth-mvtools vapoursynth-nnedi3vk vapoursynth-nlm-cuda
 vapoursynth-nlm-ispc vapoursynth-resize2 vapoursynth-sangnom
-vapoursynth-scenechange vapoursynth-sneedif vapoursynth-subtext
+vapoursynth-scenechange vapoursynth-scxvid vapoursynth-sneedif vapoursynth-subtext
 vapoursynth-timecube vapoursynth-vivtc vapoursynth-tivtc
 vapoursynth-bifrost vapoursynth-vszip vapoursynth-vszipcu
 vapoursynth-vszipcl vapoursynth-zit vapoursynth-znedi3
@@ -201,6 +201,7 @@ echo "  📦 Installing vsjetpack from git..."
 # pip's vspipe entry script carries this build machine's interpreter path as shebang and would shadow the real
 # vspipe (site-packages/vapoursynth, next in AppRun's PATH) - it only works where the build tree still exists.
 rm -f "$VS_PYTHON/bin/vspipe"
+# python/bin/ffmsindex (statically linked, from the vapoursynth-ffms2 wheel) stays: Hybrid indexes FFMS2 jobs with it, so the index matches libffms2.so.
 
 VS_SITE="$VS_PYTHON/lib/python3.14/site-packages"
 VS_PLUGDIR="$VS_SITE/vapoursynth/plugins"

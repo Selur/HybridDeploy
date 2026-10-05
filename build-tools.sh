@@ -964,59 +964,6 @@ EOL
   rm -rf build
 fi
 
-## ffmsindex
-if echo "$args" | grep -q -i -w -E 'all|ffmsindex'
-then
-  echo "building ffmsindex,..."
-  cd "$base_dir"
-  rm -rf build
-  mkdir build
-  cd build
-
-  top="$PWD"
-  export PATH="$top:$PATH"
-  export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig"
-
-  git clone --depth 1 https://github.com/FFMS/ffms2
-  git clone --depth 1 --branch "$FFMPEG_VERSION" https://github.com/FFmpeg/FFmpeg
-
-  build_nasm
-
-  cd FFmpeg
-  ./configure --prefix="$top/libs" \
-    --enable-gpl \
-    --enable-version3 \
-    --disable-encoders \
-    --disable-muxers \
-    --disable-outdevs \
-    --disable-programs \
-    --disable-doc \
-    --disable-debug \
-    --disable-xlib \
-    --disable-sdl2 \
-    --extra-cflags="-ffunction-sections -fdata-sections"
-  make $MAKEFLAGS
-  make install
-
-  cd ../ffms2
-  mkdir -p src/config
-  autoreconf -if
-  LDFLAGS="-Wl,--gc-sections" ./configure --disable-shared
-  make $MAKEFLAGS
-  strip src/index/ffmsindex
-  cp -f src/index/ffmsindex "$base_dir"
-  cd "$base_dir"
-
-  cat <<EOL >ffmsindex-sources.txt
-https://github.com/FFMS/ffms2
-$(cd ffms2 && git rev-parse HEAD)
-
-https://github.com/FFmpeg/FFmpeg
-$(cd FFmpeg && git rev-parse HEAD)
-EOL
-  rm -rf build
-fi
-
 ### x264
 if echo "$args" | grep -q -i -w -E 'all|x264'
 then
