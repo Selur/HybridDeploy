@@ -792,6 +792,10 @@ then
   cd "$base_dir"
   rm -rf build
   git clone --depth 1 https://aomedia.googlesource.com/aom build
+  # extract_encoder_settings() (common/webmenc.cc, used for every WebM output, i.e. for any -o that is not .ivf/.obu) passes the whole buffer size to
+  # every snprintf() instead of what is left behind `cur`; glibc's _FORTIFY_SOURCE aborts with "buffer overflow detected". Upstream bug since 2020 (checked
+  # against master 9469625e). The patch is a no-op once the line is fixed upstream.
+  sed -i 's/snprintf(cur, total_size, /snprintf(cur, total_size - static_cast<size_t>(cur - result), /' build/common/webmenc.cc
   mkdir -p build/build-aom
   cd build/build-aom
   cmake .. -DCMAKE_BUILD_TYPE=Release -DCONFIG_SHARED=0
@@ -914,9 +918,10 @@ then
   export PATH="$top:$PATH"
   export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig"
 
-  git clone --depth 1 https://github.com/dubhater/D2VWitch
-  git clone --depth 1 --branch release/6.1  https://github.com/FFmpeg/FFmpeg
-  # R80 (2026-09-16) dropped the classic API-3 VapourSynth.h that D2VWitch's GUIWindow.h still includes (only VapourSynth4.h remains) - R79 is the last tag that has it.
+  # Selur/D2VWitch version 6: Qt 6, FFmpeg >= 7, VapourSynth API 4 (only VapourSynth4.h is needed, R79 has it), meson only. Its command line does not create a
+  # QApplication, so it runs without a display and without a Qt platform plugin (the Qt5 based dubhater/D2VWitch needed one).
+  git clone --depth 1 https://github.com/Selur/D2VWitch
+  git clone --depth 1 --branch release/8.0 https://github.com/FFmpeg/FFmpeg
   git clone --depth 1 --branch R79 https://github.com/vapoursynth/vapoursynth
 
   build_nasm
@@ -937,21 +942,15 @@ then
   make $MAKEFLAGS
   make install
 
-  export vapoursynth_CFLAGS="-I../vapoursynth/include"
-  export vapoursynth_LIBS=" "
-  cd .. 
-  cd D2VWitch
-  autoreconf -if
-  LDFLAGS="-Wl,--gc-sections" \
-
-  ./configure
-  make $MAKEFLAGS
-  strip d2vwitch
-  cp -f d2vwitch "$base_dir"
+  cd ../D2VWitch
+  LDFLAGS="-Wl,--gc-sections" meson setup build -Dvapoursynth_includedir="$top/vapoursynth/include"
+  ninja -C build
+  strip build/d2vwitch
+  cp -f build/d2vwitch "$base_dir"
   cd "$base_dir"
 
   cat <<EOL >d2vwitch-sources.txt
-https://github.com/dubhater/D2VWitch
+https://github.com/Selur/D2VWitch
 $(cd build/D2VWitch && git rev-parse HEAD)
 
 https://github.com/FFmpeg/FFmpeg

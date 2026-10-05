@@ -633,6 +633,33 @@ mkdir -p "$APPDIR/usr/lib/gio/modules"
 
 ./linuxdeploy-x86_64.AppImage --appdir "$APPDIR" -e "$APPDIR/usr/bin/Hybrid" -i "$APPDIR/hybrid.png" -d "$APPDIR/usr/share/applications/hybrid.desktop" || true
 
+# d2vwitch is a Qt5 program and creates a QGuiApplication even on the command line. linuxdeploy bundles its Qt5 libraries, but no Qt5
+# platform plugin, and the launchers point QT_PLUGIN_PATH/QT_QPA_PLATFORM_PLUGIN_PATH at the Qt6 plugins - without a plugin it aborts at
+# once with 'Could not find the Qt platform plugin "xcb"' and every MPEG-1/2 index job fails (check_job_runs.py vs-x264-mkv). The wrapper
+# runs it on the Qt5 'offscreen' plugin, which needs no display, with its own plugin path; Hybrid keeps starting 'd2vwitch'.
+# Done after the last linuxdeploy run, which patches the RUNPATH of the ELF files in usr/bin (the wrapper is not one).
+# Only needed for a Qt5 build (dubhater/D2VWitch); Selur/D2VWitch v6 is a Qt6 program whose command line needs no platform plugin, then nothing is wrapped.
+if [ -f "$APPDIR/usr/bin/d2vwitch" ] && file "$APPDIR/usr/bin/d2vwitch" | grep -q ELF && readelf -d "$APPDIR/usr/bin/d2vwitch" | grep -q "libQt5Core"; then
+  QT5_OFFSCREEN="$(ls /usr/lib/*/qt5/plugins/platforms/libqoffscreen.so /usr/lib/qt5/plugins/platforms/libqoffscreen.so 2>/dev/null | head -n1 || true)"
+  if [ -n "$QT5_OFFSCREEN" ]; then
+    mkdir -p "$APPDIR/usr/lib/qt5/plugins/platforms"
+    cp -v "$QT5_OFFSCREEN" "$APPDIR/usr/lib/qt5/plugins/platforms/"
+    mv "$APPDIR/usr/bin/d2vwitch" "$APPDIR/usr/bin/d2vwitch.bin"
+    cat > "$APPDIR/usr/bin/d2vwitch" <<'D2VEOF'
+#!/usr/bin/env bash
+HERE="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+export QT_PLUGIN_PATH="$HERE/../lib/qt5/plugins"
+export QT_QPA_PLATFORM_PLUGIN_PATH="$HERE/../lib/qt5/plugins/platforms"
+export QT_QPA_PLATFORM=offscreen
+unset QML2_IMPORT_PATH
+exec "$HERE/d2vwitch.bin" "$@"
+D2VEOF
+    chmod +x "$APPDIR/usr/bin/d2vwitch"
+  else
+    echo "⚠️ Qt5 offscreen platform plugin not found on build host (apt: libqt5gui5) - d2vwitch will not start"
+  fi
+fi
+
 ARCH=x86_64 ./appimagetool-x86_64.AppImage "$APPDIR" "$OUT_APPIMAGE"
 
 cd "$SCRIPT_DIR"
