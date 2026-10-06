@@ -146,11 +146,13 @@ echo "  📦 Installing GitHub-release wheels (vinverse, grwrld)..."
 # Own plugins with GitHub release wheels (API 4, x86_64 only here): always the latest release.
 # Tag, wheel URL and SHA-256 come from the release API; the wheel is picked by platform (manylinux x86_64), not by name,
 # because a release can keep the version of its metadata in the file name (MiniDeenNeo v1.1 ships *-1.0-*.whl).
+# GitHub (API and the signed release-asset redirect) now and then fails for a moment; a single failed request must not end a deploy that has run for minutes.
+CURL_RETRY=(--retry 3 --retry-delay 5 --retry-all-errors)
 # install_latest_release_wheel <label> <owner/repo>
 install_latest_release_wheel() {
   local label="$1" repo="$2" info tag url sha wheel
   echo "  📦 Installing $label (latest release of $repo)..."
-  info=$(curl -sfL "https://api.github.com/repos/$repo/releases/latest" | "$VS_PY_BIN" -c '
+  info=$(curl -sfL "${CURL_RETRY[@]}" "https://api.github.com/repos/$repo/releases/latest" | "$VS_PY_BIN" -c '
 import json, sys
 d = json.load(sys.stdin)
 for a in d["assets"]:
@@ -163,7 +165,7 @@ else:
 ') || { echo "  ❌ could not resolve the latest $label release"; exit 1; }
   read -r tag url sha wheel <<< "$info"
   echo "     $tag ($wheel)"
-  curl -sfL -o "$DEPLOY_DIR/$wheel" "$url" || { echo "  ❌ download of $wheel failed"; exit 1; }
+  curl -sfL "${CURL_RETRY[@]}" -o "$DEPLOY_DIR/$wheel" "$url" || { echo "  ❌ download of $wheel failed"; exit 1; }
   if [ -n "$sha" ]; then
     echo "$sha  $DEPLOY_DIR/$wheel" | sha256sum -c - || exit 1
   fi
@@ -189,7 +191,7 @@ SMOOTHUV_WHEEL="vapoursynth_smoothuv-3.1-py3-none-manylinux_2_27_x86_64.whl"
 SMOOTHUV_URL="https://github.com/AliceTeaParty/vapoursynth-api4-wheels/releases/download/vapoursynth-smoothuv-v3.1/$SMOOTHUV_WHEEL"
 SMOOTHUV_SHA256="8a2dd7a7aaf76751eb037cb77a6b45479dbdd1e01676738792a7973ff957eb68"
 echo "  📦 Installing smoothuv 3.1..."
-curl -sfL -o "$DEPLOY_DIR/$SMOOTHUV_WHEEL" "$SMOOTHUV_URL" || { echo "  ❌ download of $SMOOTHUV_WHEEL failed"; exit 1; }
+curl -sfL "${CURL_RETRY[@]}" -o "$DEPLOY_DIR/$SMOOTHUV_WHEEL" "$SMOOTHUV_URL" || { echo "  ❌ download of $SMOOTHUV_WHEEL failed"; exit 1; }
 echo "$SMOOTHUV_SHA256  $DEPLOY_DIR/$SMOOTHUV_WHEEL" | sha256sum -c - || exit 1
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q --no-deps "$DEPLOY_DIR/$SMOOTHUV_WHEEL"
 rm -f "$VS_PYTHON/lib/python3.14/site-packages/RainbowSmooth.py"
