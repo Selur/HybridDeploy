@@ -86,7 +86,21 @@ build_meson TCanny \
 GSL_VERSION="2.8"
 echo "=== Building GSL $GSL_VERSION (static, PIC, for Bore) ==="
 GSL_SRC="$WORK_DIR/gsl-$GSL_VERSION"
-curl -sfL "https://ftpmirror.gnu.org/gnu/gsl/gsl-$GSL_VERSION.tar.gz" | tar -xz -C "$WORK_DIR"
+# Download to a file, try several mirrors and check the SHA-256 before unpacking: ftpmirror.gnu.org redirects to a mirror that is
+# sometimes down, and a truncated stream piped into tar ended the whole deploy.
+GSL_SHA256="6a99eeed15632c6354895b1dd542ed5a855c0f15d9ad1326c6fe2b2c9e423190"
+GSL_TARBALL="$WORK_DIR/gsl-$GSL_VERSION.tar.gz"
+gsl_ok=0
+for base in https://ftp.fau.de/gnu/gsl https://mirror.dogado.de/gnu/gsl https://mirrors.kernel.org/gnu/gsl https://ftpmirror.gnu.org/gnu/gsl https://ftp.gnu.org/gnu/gsl; do
+  if curl -sfL --retry 2 --retry-delay 3 --connect-timeout 15 -m 120 -o "$GSL_TARBALL" "$base/gsl-$GSL_VERSION.tar.gz" \
+     && echo "$GSL_SHA256  $GSL_TARBALL" | sha256sum -c --status -; then
+    gsl_ok=1
+    break
+  fi
+  echo "  ⚠️ gsl-$GSL_VERSION.tar.gz from $base failed or does not match the SHA-256, trying the next mirror"
+done
+[ "$gsl_ok" = 1 ] || { echo "  ❌ could not download gsl-$GSL_VERSION.tar.gz"; exit 1; }
+tar -xzf "$GSL_TARBALL" -C "$WORK_DIR"
 GSL_PREFIX="$WORK_DIR/gsl-prefix"
 (
   cd "$GSL_SRC"
