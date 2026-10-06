@@ -184,6 +184,8 @@ install_latest_release_wheel vcm Selur/vcm
 install_latest_release_wheel ReduceFlicker Selur/ReduceFlicker
 # DeblockPP7 (Selur/VapourSynth-DeblockPP7 v5: API 4 port, namespace pp7, libdeblockpp7.so)
 install_latest_release_wheel DeblockPP7 Selur/VapourSynth-DeblockPP7
+# FrFun7 (Selur/vapoursynth-frfun7 v1: API 4 port, 8 bit only, libfrfun7.so in vapoursynth/plugins, same namespace as the API 3 build it replaces)
+install_latest_release_wheel FrFun7 Selur/vapoursynth-frfun7
 
 # smoothuv (RainbowSmooth, docs 32, 6): API 4 port from AliceTeaParty/vapoursynth-api4-wheels, a third-party repo, so URL and SHA-256 are pinned.
 # The wheel also ships a RainbowSmooth.py without Hybrid's `tools` argument; Hybrid's vsscripts come first in sys.path, the copy is deleted anyway.

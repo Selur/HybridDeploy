@@ -1128,6 +1128,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   git clone --depth 1 https://github.com/xiph/vorbis
   git clone --depth 1 https://github.com/xiph/theora
   git clone --depth 1 https://github.com/xiph/flac
+  git clone --depth 1 https://code.videolan.org/videolan/dav1d.git
   git clone --depth 1 https://chromium.googlesource.com/webm/libvpx
   git clone --depth 1 https://chromium.googlesource.com/webm/libwebp
   git clone --depth 1 https://code.videolan.org/videolan/x264.git
@@ -1181,6 +1182,9 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
 
   # Theora (Autotools)
   build_ffdep theora autotools "--disable-shared"
+
+  # dav1d (Meson, static) - AV1 software decoder for ffmpeg (libdav1d); ffmpeg's own av1 decoder only works with hardware acceleration
+  build_ffdep dav1d meson "-Ddefault_library=static -Dlibdir=lib -Denable_tools=false -Denable_tests=false"
 
   # --- Opus (Autotools) ---
   cd opus
@@ -1335,6 +1339,7 @@ EOF
     $nvflags \
     --enable-libass \
     --enable-libbluray \
+    --enable-libdav1d \
     --enable-libdvdread \
     --enable-libdvdnav \
     --enable-libfontconfig \
@@ -1398,6 +1403,9 @@ $(cd build/vorbis && git rev-parse HEAD)
 
 https://github.com/xiph/theora
 $(cd build/theora && git rev-parse HEAD)
+
+https://code.videolan.org/videolan/dav1d.git
+$(cd build/dav1d && git rev-parse HEAD)
 
 https://github.com/xiph/flac
 $(cd build/flac && git rev-parse HEAD)

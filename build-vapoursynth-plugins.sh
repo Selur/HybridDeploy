@@ -46,16 +46,6 @@ if ! grep -q '^libdir=' "$PC_FILE"; then
 fi
 export PKG_CONFIG_PATH="$SDK_DIR/vapoursynth/pkgconfig"
 
-# --- Step 2: the API 3 headers (FrFun7; the pip wheel only ships VapourSynth4.h) ----
-echo "Fetching API3 headers ($VS_TAG)..."
-API3_DIR="$WORK_DIR/api3"
-mkdir -p "$API3_DIR/vapoursynth"
-for h in VapourSynth.h VSHelper.h; do
-  curl -sL "https://raw.githubusercontent.com/vapoursynth/vapoursynth/$VS_TAG/include/$h" -o "$API3_DIR/$h"
-done
-# Also expose the headers under the <vapoursynth/...> subpath.
-cp "$API3_DIR"/*.h "$API3_DIR/vapoursynth/"
-
 # --- Helpers -----------------------------------------------------------------
 
 # build_meson <name> <git-url> <so-filename-in-build-dir> [extra CXXFLAGS] [branch-or-tag] [subdir-with-meson.build] [installed-filename] [extra meson args]
@@ -89,11 +79,7 @@ build_meson TCanny \
   libtcanny.so
 
 # --- Step 3a: plugins without a wheel, filters that had no Linux build before (docs 32, 6) ----------------
-# API 3 plugin (R79 loads it): FrFun7. DeJitter (vcm), ReduceFlicker and DeblockPP7 come as API 4 wheels from deploy-tools.sh.
-build_meson Frfun7 \
-  https://github.com/dubhatervapoursynth/vapoursynth-frfun7.git \
-  libfrfun7.so \
-  "-I$API3_DIR" v2
+# FrFun7, DeJitter (vcm), ReduceFlicker and DeblockPP7 come as API 4 wheels from deploy-tools.sh, so no API 3 plugin is built here any more.
 
 # Bore (API 4, GPL-3): GSL is linked statically so the bundle needs no libgsl; the distro libgsl.a is not PIC,
 # so GSL is built from the tarball with --with-pic.
