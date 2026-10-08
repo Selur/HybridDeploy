@@ -201,6 +201,8 @@ rm -f "$VS_PYTHON/lib/python3.14/site-packages/RainbowSmooth.py"
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
   "vsjetpack @ git+https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack.git@main"
+# vs-jetpack still passes fields/tff to mvutensils, which version 10 removed (QTempGaussMC fails); docs 08/42.
+"$VS_PY_BIN" "$SCRIPT_DIR/patch-vsjetpack-mvutensils.py" "$VS_PYTHON/lib/python3.14/site-packages" || exit 1
 
 # pip's vspipe entry script carries this build machine's interpreter path as shebang and would shadow the real
 # vspipe (site-packages/vapoursynth, next in AppRun's PATH) - it only works where the build tree still exists.
