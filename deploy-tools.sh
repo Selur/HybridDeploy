@@ -366,6 +366,14 @@ export APP_LIB32="$HERE/usr/lib32"
 
 export LD_LIBRARY_PATH="$APP_LIB:$APP_LIB32:${LD_LIBRARY_PATH:-}"
 
+# libwayland comes from the host: the host's Mesa (libEGL_mesa) is built against the host's libwayland-client and fails with the
+# bundled one from the build host once that is older ("undefined symbol: wl_display_create_queue_with_name", wayland >= 1.23).
+# The bundled copy in wayland-fallback only serves systems without libwayland.
+LDCACHE="$( { /sbin/ldconfig -p || /usr/sbin/ldconfig -p || ldconfig -p; } 2>/dev/null || true)"
+if ! grep -q "libwayland-client.so.0 (libc6,x86-64)" <<<"$LDCACHE"; then
+  export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$APP_LIB/wayland-fallback"
+fi
+
 export QT_PLUGIN_PATH="$HERE/usr/lib/qt6/plugins"
 export QT_QPA_PLATFORM_PLUGIN_PATH="$HERE/usr/lib/qt6/plugins/platforms"
 export QML2_IMPORT_PATH="$HERE/usr/lib/qt6/qml"
@@ -413,7 +421,9 @@ else
 fi
 
 BIN="$HERE/usr/bin/Hybrid"
-if file "$BIN" | grep -q "32-bit"; then
+# Host 'file' without the bundled libmagic: libmagic 5.45 from the build host cannot read a newer host magic.mgc
+# ("File 5.45 supports only version 18 magic files").
+if env -u LD_LIBRARY_PATH file "$BIN" | grep -q "32-bit"; then
   if [ -x "$APP_LIB32/ld-linux.so.2" ]; then
     exec "$APP_LIB32/ld-linux.so.2" --library-path "$APP_LIB32:$APP_LIB" "$BIN" "$@"
   else
@@ -435,6 +445,14 @@ export APP_LIB32="$HERE/usr/lib32"
 
 export LD_LIBRARY_PATH="$APP_LIB:$APP_LIB32:${LD_LIBRARY_PATH:-}"
 
+# libwayland comes from the host: the host's Mesa (libEGL_mesa) is built against the host's libwayland-client and fails with the
+# bundled one from the build host once that is older ("undefined symbol: wl_display_create_queue_with_name", wayland >= 1.23).
+# The bundled copy in wayland-fallback only serves systems without libwayland.
+LDCACHE="$( { /sbin/ldconfig -p || /usr/sbin/ldconfig -p || ldconfig -p; } 2>/dev/null || true)"
+if ! grep -q "libwayland-client.so.0 (libc6,x86-64)" <<<"$LDCACHE"; then
+  export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$APP_LIB/wayland-fallback"
+fi
+
 export QT_PLUGIN_PATH="$HERE/usr/lib/qt6/plugins"
 export QT_QPA_PLATFORM_PLUGIN_PATH="$HERE/usr/lib/qt6/plugins/platforms"
 export QML2_IMPORT_PATH="$HERE/usr/lib/qt6/qml"
@@ -482,7 +500,9 @@ else
 fi
 
 BIN="$HERE/usr/bin/Hybrid"
-if file "$BIN" | grep -q "32-bit"; then
+# Host 'file' without the bundled libmagic: libmagic 5.45 from the build host cannot read a newer host magic.mgc
+# ("File 5.45 supports only version 18 magic files").
+if env -u LD_LIBRARY_PATH file "$BIN" | grep -q "32-bit"; then
   if [ -x "$APP_LIB32/ld-linux.so.2" ]; then
     exec "$APP_LIB32/ld-linux.so.2" --library-path "$APP_LIB32:$APP_LIB" "$BIN" "$@"
   else
@@ -665,6 +685,11 @@ D2VEOF
     echo "⚠️ Qt5 offscreen platform plugin not found on build host (apt: libqt5gui5) - d2vwitch will not start"
   fi
 fi
+
+# libwayland out of usr/lib, the launchers take the host's (see there). After the last linuxdeploy run, which copies it back as a
+# dependency of the Qt Wayland plugin, SDL2, GTK and sox; libQt6WaylandClient's RUNPATH would otherwise find it in usr/lib.
+mkdir -p "$APPDIR/usr/lib/wayland-fallback"
+mv -v "$APPDIR"/usr/lib/libwayland-*.so* "$APPDIR/usr/lib/wayland-fallback/" 2>/dev/null || true
 
 ARCH=x86_64 ./appimagetool-x86_64.AppImage "$APPDIR" "$OUT_APPIMAGE"
 
