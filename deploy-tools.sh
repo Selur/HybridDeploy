@@ -113,7 +113,7 @@ vapoursynth
 vapoursynth-mvutensils vapoursynth-adaptivegrain vapoursynth-akarin
 vapoursynth-awarp vapoursynth-bestsource vapoursynth-bilateralgpu
 vapoursynth-bm3d vapoursynth-bm3dcpu vapoursynth-bm3dcuda vapoursynth-bm3dhip vapoursynth-bwdif vapoursynth-cas vapoursynth-cdef
-vapoursynth-cranexpr vapoursynth-d2vsource vapoursynth-dctfilter
+vapoursynth-cranexpr vapoursynth-d2vsource vapoursynth-dctfilter vapoursynth-dfttest2-cpu
 vapoursynth-deblock vapoursynth-decross vapoursynth-dedot vapoursynth-descale
 vapoursynth-descratch vapoursynth-dotkill vapoursynth-edgefixer
 vapoursynth-edgemasks vapoursynth-eedi3 vapoursynth-eedi3vk2
