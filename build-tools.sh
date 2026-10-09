@@ -7,6 +7,11 @@ FFMPEG_VERSION="n8.0.1"
 base_dir=$(pwd)/tools/
 
 build_nasm () {
+  # The system nasm (Ubuntu 26.04: 3.01) is new enough; 2.14.02 no longer compiles with GCC 15 (C23: "#typedef", bool).
+  if command -v nasm >/dev/null; then
+    cp "$(command -v nasm)" nasm
+    return
+  fi
   ver="2.14.02"
   wget https://www.nasm.us/pub/nasm/releasebuilds/$ver/nasm-${ver}.tar.xz
   tar xf nasm-${ver}.tar.xz
@@ -16,6 +21,11 @@ build_nasm () {
   cp nasm ..
   cd ..
   rm -rf nasm-$ver nasm-${ver}.tar.xz
+}
+
+# GCC 15's libstdc++ no longer pulls in <cstdint> indirectly; json11 (HDR10+) uses uint8_t without it
+x265_cstdint_fix () {
+  grep -q '#include <cstdint>' "$1/source/dynamicHDR10/json11/json11.cpp" || sed -i '1i #include <cstdint>' "$1/source/dynamicHDR10/json11/json11.cpp"
 }
 
 build_ffdep() {
@@ -90,79 +100,10 @@ else
   args="$*"
 fi
 
+# System packages come from setup-root.sh (the only step with sudo); here they are only checked.
 if [ -x "/usr/bin/apt" ]; then
-  sudo apt update
-  sudo apt upgrade -y
-  sudo apt install --no-install-recommends -y \
-  build-essential \
-  git \
-  subversion \
-  wget \
-  cmake \
-  nasm \
-  yasm \
-  unzip \
-  upx-ucl \
-  autoconf \
-  automake \
-  gettext \
-  libtool-bin \
-  pkg-config \
-  qt6-base-dev \
-  qt6-multimedia-dev \
-  qt6-svg-dev \
-  qtbase5-dev \
-  docbook-xsl \
-  xsltproc \
-  rake \
-  ragel \
-  libgl1-mesa-dev \
-  libgmp-dev \
-  libboost-filesystem-dev \
-  libboost-system-dev \
-  libboost-regex-dev \
-  libboost-date-time-dev \
-  libdvdread-dev \
-  libfdk-aac-dev \
-  libogg-dev \
-  libvorbis-dev \
-  libflac-dev \
-  zlib1g-dev \
-  liblzma-dev \
-  libbz2-dev \
-  libpng-dev \
-  libjpeg-dev \
-  libgif-dev \
-  libopenal-dev \
-  libasound-dev \
-  libpulse-dev \
-  libopencore-amrnb-dev \
-  libopencore-amrwb-dev \
-  libmp3lame-dev \
-  libmpg123-dev \
-  libopus-dev \
-  libopusfile-dev \
-  libsndfile-dev \
-  libwavpack-dev \
-  libmagic-dev \
-  libnuma-dev \
-  libbluray-dev \
-  libxvidcore-dev \
-  libva-dev \
-  libvdpau-dev \
-  libsdl2-dev \
-  libxml2-dev \
-  libfreetype6-dev \
-  libfontconfig1-dev \
-  libxcb1-dev \
-  libxcb-shm*-dev \
-  libxcb-xfixes*-dev \
-  libxcb-shape*-dev \
-  libcmark-dev \
-  libtheora-dev \
-  libfribidi-dev \
-  ninja-build \
-  meson
+  source "$(dirname "${BASH_SOURCE[0]}")/apt-packages.sh"
+  require_packages "${BUILD_PACKAGES[@]}"
 fi
 
 mkdir -p tools
@@ -251,6 +192,8 @@ then
   cd build
   wget http://www.moitah.net/download/latest/FLVExtractCL_cpp.zip
   unzip FLVExtractCL_cpp.zip
+  # Boost >= 1.89 has no libboost_system any more (header-only)
+  sed -i 's/ *-lboost_system//g' Makefile
   make
   strip FLVExtractCL
   cp -f FLVExtractCL "$base_dir"
@@ -459,21 +402,22 @@ then
   rm -rf build
 fi
 
-### sox
+### sox (sox_ng, the maintained fork; Hybrid looks for sox_ng before sox)
 # TODO: build static deps?
-if echo "$args" | grep -q -i -w -E 'all|sox'
+if echo "$args" | grep -q -i -w -E 'all|sox|sox_ng'
 then
-  echo "building SOX,..."
+  echo "building sox_ng,..."
   cd "$base_dir"
   rm -rf build
-  git clone https://git.code.sf.net/p/sox/code build
+  git clone https://codeberg.org/sox_ng/sox_ng.git build
   cd build
-  git checkout $(git tag --list | sort -V | grep -v rc | tail -1)
+  git checkout $(git tag --list 'sox_ng-*' | grep -viE 'rc|alpha|beta' | sort -V | tail -1)
   autoreconf -if
   ./configure --disable-shared
   make $MAKEFLAGS
-  strip src/sox
-  cp -f src/sox "$base_dir"
+  strip src/sox_ng
+  cp -f src/sox_ng "$base_dir"
+  rm -f "$base_dir/sox"
   cd "$base_dir"
   rm -rf build
 fi
@@ -748,7 +692,8 @@ then
    git clone --depth 1 https://github.com/m-ab-s/xvid.git
    cd xvid/xvidcore/build/generic
    ./bootstrap.sh
-   ./configure --enable-static --disable-shared
+   # GCC 15 defaults to C23, xvid typedefs bool
+   ./configure --enable-static --disable-shared CC="gcc -std=gnu17"
    make $MAKEFLAGS
    cd ../../examples
    make $MAKEFLAGS
@@ -859,6 +804,7 @@ then
   cd "$base_dir"
   rm -rf x265
   git clone --depth 1 https://bitbucket.org/multicoreware/x265_git.git x265
+  x265_cstdint_fix x265
   mv x265 build
 
   mkdir -p build/build-x265
@@ -1102,15 +1048,6 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   export PATH="$top:$PATH"
   export PKG_CONFIG_PATH="$LIBS/lib/pkgconfig:$PKG_CONFIG_PATH"
 
-  # Ensure nv-codec-headers are available for NVENC support (no GPU/CUDA needed at compile time)
-  if [ ! -d "/usr/local/cuda/include/ffnvcodec" ]; then
-    echo "Installing nv-codec-headers for NVENC compile-time support..."
-    git clone --depth 1 -b n12.2.72.0 https://github.com/FFmpeg/nv-codec-headers /tmp/nv-codec-headers
-    sudo mkdir -p /usr/local/cuda/include /usr/local/cuda/lib64
-    sudo cp -r /tmp/nv-codec-headers/include/ffnvcodec /usr/local/cuda/include/
-    rm -rf /tmp/nv-codec-headers
-  fi
-
   # Clone sources
   git clone --depth 1 --branch "$FFMPEG_VERSION" https://github.com/FFmpeg/FFmpeg ffmpeg-src
   git clone --depth 1 https://github.com/fribidi/fribidi
@@ -1140,6 +1077,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   git clone --depth 1 https://github.com/xiph/opusfile
   svn checkout https://svn.code.sf.net/p/lame/svn/trunk/lame
   git clone --depth 1 https://bitbucket.org/multicoreware/x265_git.git x265
+  x265_cstdint_fix x265
 
   # Build tools
   build_nasm

@@ -52,15 +52,9 @@ if [ -n "$missing_bins" ]; then
   exit 1
 fi
 
-# --- Install dependencies ---
-echo "🔧 Configuring system dependencies (requires sudo)..."
-sudo dpkg --add-architecture i386
-sudo apt-get update
-sudo apt-get install --no-install-recommends -y \
-  qt6-base-dev qt6-base-dev-tools qt6-multimedia-dev qt6-svg-dev \
-  libqt6svg6 libqt6multimedia6 libqt6widgets6 libqt6gui6 libqt6core6 \
-  qt6-wayland libqt6waylandclient6 libqt6waylandcompositor6 \
-  p7zip-full rsync wget libc6:i386 libstdc++6:i386 libgcc-s1:i386 libpthread-stubs0-dev:i386
+# --- Check dependencies (installed by setup-root.sh, the only step with sudo) ---
+source "$SCRIPT_DIR/apt-packages.sh"
+require_packages "${DEPLOY_PACKAGES[@]}"
 
 # --- Prepare AppDir ---
 DEPLOY_DIR="$SCRIPT_DIR/hybrid"
@@ -201,8 +195,6 @@ rm -f "$VS_PYTHON/lib/python3.14/site-packages/RainbowSmooth.py"
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
   "vsjetpack @ git+https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack.git@main"
-# vs-jetpack still passes fields/tff to mvutensils, which version 10 removed (QTempGaussMC fails); docs 08/42.
-"$VS_PY_BIN" "$SCRIPT_DIR/patch-vsjetpack-mvutensils.py" "$VS_PYTHON/lib/python3.14/site-packages" || exit 1
 
 # pip's vspipe entry script carries this build machine's interpreter path as shebang and would shadow the real
 # vspipe (site-packages/vapoursynth, next in AppRun's PATH) - it only works where the build tree still exists.
@@ -414,7 +406,7 @@ fi
 
 # Plattform-Auswahl: Wayland wenn verfügbar, sonst XCB
 if [ -n "${WAYLAND_DISPLAY:-}" ] && \
-   [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland-generic.so" ]; then
+   { [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland.so" ] || [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland-generic.so" ]; }; then
   export QT_QPA_PLATFORM="wayland;xcb"
 else
   export QT_QPA_PLATFORM="xcb"
@@ -493,7 +485,7 @@ fi
 
 # Plattform-Auswahl: Wayland wenn verfügbar, sonst XCB
 if [ -n "${WAYLAND_DISPLAY:-}" ] && \
-   [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland-generic.so" ]; then
+   { [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland.so" ] || [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland-generic.so" ]; }; then
   export QT_QPA_PLATFORM="wayland;xcb"
 else
   export QT_QPA_PLATFORM="xcb"
@@ -523,22 +515,9 @@ wget -q -O linuxdeploy-plugin-qt-x86_64.AppImage https://github.com/linuxdeploy/
 wget -q -O appimagetool-x86_64.AppImage https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage || true
 chmod +x linuxdeploy-*.AppImage appimagetool-x86_64.AppImage || true
 
-# --- Theora + AMR fixes (unchanged) ---
-for lib in theoradec theoraenc; do
-  real=$(ls /usr/lib/x86_64-linux-gnu/lib${lib}.so.1.* 2>/dev/null | head -n1 || true)
-  target="/usr/lib/x86_64-linux-gnu/lib${lib}.so.2"
-  if [ -n "$real" ] && [ ! -f "$target" ]; then
-    echo "🔧 Creating missing $target symlink → $(basename "$real")"
-    sudo ln -sf "$real" "$target"
-  fi
-done
-
-if ! ldconfig -p | grep -q libvo-amrwbenc.so.0; then
-  echo "🔧 Installing missing libvo-amrwbenc..."
-  sudo apt-get install -y libvo-amrwbenc-dev libvo-amrwbenc0 || true
-fi
-
 export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib32"
+# /usr/bin/qmake is qtchooser and resolves to Qt 5 (qtbase5-dev is installed for d2vwitch); the qt plugin then finds no modules
+export QMAKE="$(command -v qmake6)"
 
 ./linuxdeploy-x86_64.AppImage --appdir "$APPDIR" \
   -e "$APPDIR/usr/bin/Hybrid" \
@@ -644,7 +623,8 @@ else
   echo "⚠️ libSDL2-2.0.so.0 not found on build host — ffplay will be missing it in the AppImage"
 fi
 
-ICU_VERSION="74"
+# ICU version Qt links against (Ubuntu 24.04: 74, 26.04: 78)
+ICU_VERSION=$(ldd "$QT_LIB_DIR/libQt6Core.so.6" | sed -n 's/.*libicuuc\.so\.\([0-9]*\) =>.*/\1/p' | head -n1)
 ICU_LIBS=("icui18n" "icuuc" "icudata")
 for lib in "${ICU_LIBS[@]}"; do
     src="$QT_LIB_DIR/lib${lib}.so.${ICU_VERSION}"
