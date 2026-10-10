@@ -103,7 +103,7 @@ VS_PIP_PACKAGES="
 vapoursynth
 vapoursynth-mvutensils vapoursynth-adaptivegrain vapoursynth-akarin
 vapoursynth-awarp vapoursynth-bestsource==21
-vapoursynth-bm3d vapoursynth-bm3dvk vapoursynth-bwdif vapoursynth-cas vapoursynth-cdef
+vapoursynth-bm3d vapoursynth-bm3dvk vapoursynth-bm3dvk2 vapoursynth-bwdif vapoursynth-cas vapoursynth-cdef
 vapoursynth-cranexpr vapoursynth-d2vsource vapoursynth-dctfilter vapoursynth-dfttest2-cpu
 vapoursynth-deblock vapoursynth-decross vapoursynth-dedot vapoursynth-descale
 vapoursynth-descratch vapoursynth-dotkill vapoursynth-edgefixer
