@@ -91,10 +91,7 @@ fi
 VS_PY_BIN="$VS_PYTHON/bin/python3"
 "$VS_PY_BIN" -m ensurepip --upgrade >/dev/null 2>&1 || true
 
-# Pin the core for every pip call below, same release as VS_TAG in build-vapoursynth-plugins.sh and the
-# Windows trees (R81, docs 55/56). R80 dropped API 3: no API 3 plugin is installed (bm3dcpu/cuda/hip, nlm_cuda,
-# bilateralgpu); the Vulkan wheels bm3dvk, knlmeansvk and feel replace the GPU ones (docs 32, 7).
-# bestsource stays at 21 like on Windows: 22 drops hwdevice and returns only Vulkan-resident frames (docs 56, 2 D).
+# Core pin for every pip call (same as VS_TAG); R81 loads no API 3 plugins, bestsource stays 21 (docs 32, 7 and 56, 2 D).
 VS_VERSION="81"
 echo "vapoursynth==$VS_VERSION" > "$DEPLOY_DIR/vs-constraints.txt"
 export PIP_CONSTRAINT="$DEPLOY_DIR/vs-constraints.txt"
