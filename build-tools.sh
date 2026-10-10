@@ -864,11 +864,11 @@ then
   export PATH="$top:$PATH"
   export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig"
 
-  # Selur/D2VWitch version 6: Qt 6, FFmpeg >= 7, VapourSynth API 4 (only VapourSynth4.h is needed, R79 has it), meson only. Its command line does not create a
+  # Selur/D2VWitch version 6: Qt 6, FFmpeg >= 7, VapourSynth API 4 (only VapourSynth4.h is needed), meson only. Its command line does not create a
   # QApplication, so it runs without a display and without a Qt platform plugin (the Qt5 based dubhater/D2VWitch needed one).
   git clone --depth 1 https://github.com/Selur/D2VWitch
   git clone --depth 1 --branch release/8.0 https://github.com/FFmpeg/FFmpeg
-  git clone --depth 1 --branch R79 https://github.com/vapoursynth/vapoursynth
+  git clone --depth 1 --branch R81 https://github.com/vapoursynth/vapoursynth
 
   build_nasm
 

@@ -91,11 +91,11 @@ fi
 VS_PY_BIN="$VS_PYTHON/bin/python3"
 "$VS_PY_BIN" -m ensurepip --upgrade >/dev/null 2>&1 || true
 
-# Pin the core for every pip call below: R80 dropped API 3, so an unpinned core disables every API3 plugin
-# (nlm_cuda, bilateralgpu, bm3dcpu/cuda/hip); a package that needs a newer core
-# then resolves to its last compatible release (bestsource 21) instead of upgrading it. Same release as
-# VS_TAG in build-vapoursynth-plugins.sh and the macOS bundle.
-VS_VERSION="79"
+# Pin the core for every pip call below, same release as VS_TAG in build-vapoursynth-plugins.sh and the
+# Windows trees (R81, docs 55/56). R80 dropped API 3: no API 3 plugin is installed (bm3dcpu/cuda/hip, nlm_cuda,
+# bilateralgpu); the Vulkan wheels bm3dvk, knlmeansvk and feel replace the GPU ones (docs 32, 7).
+# bestsource stays at 21 like on Windows: 22 drops hwdevice and returns only Vulkan-resident frames (docs 56, 2 D).
+VS_VERSION="81"
 echo "vapoursynth==$VS_VERSION" > "$DEPLOY_DIR/vs-constraints.txt"
 export PIP_CONSTRAINT="$DEPLOY_DIR/vs-constraints.txt"
 
@@ -105,8 +105,8 @@ export PIP_CONSTRAINT="$DEPLOY_DIR/vs-constraints.txt"
 VS_PIP_PACKAGES="
 vapoursynth
 vapoursynth-mvutensils vapoursynth-adaptivegrain vapoursynth-akarin
-vapoursynth-awarp vapoursynth-bestsource vapoursynth-bilateralgpu
-vapoursynth-bm3d vapoursynth-bm3dcpu vapoursynth-bm3dcuda vapoursynth-bm3dhip vapoursynth-bwdif vapoursynth-cas vapoursynth-cdef
+vapoursynth-awarp vapoursynth-bestsource==21
+vapoursynth-bm3d vapoursynth-bm3dvk vapoursynth-bwdif vapoursynth-cas vapoursynth-cdef
 vapoursynth-cranexpr vapoursynth-d2vsource vapoursynth-dctfilter vapoursynth-dfttest2-cpu
 vapoursynth-deblock vapoursynth-decross vapoursynth-dedot vapoursynth-descale
 vapoursynth-descratch vapoursynth-dotkill vapoursynth-edgefixer
@@ -114,7 +114,7 @@ vapoursynth-edgemasks vapoursynth-eedi3 vapoursynth-eedi3vk2
 vapoursynth-fillborders vapoursynth-ffms2 vapoursynth-fmtconv
 vapoursynth-hysteresis vapoursynth-iscombed vapoursynth-knlmeanscl
 vapoursynth-lsmas vapoursynth-readmpls
-vapoursynth-mvtools vapoursynth-nnedi3vk vapoursynth-nlm-cuda
+vapoursynth-mvtools vapoursynth-nnedi3vk vapoursynth-knlmeansvk vapoursynth-feel
 vapoursynth-nlm-ispc vapoursynth-resize2 vapoursynth-sangnom
 vapoursynth-scenechange vapoursynth-scxvid vapoursynth-sneedif vapoursynth-subtext
 vapoursynth-timecube vapoursynth-vivtc vapoursynth-tivtc

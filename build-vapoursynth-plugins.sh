@@ -9,8 +9,8 @@ OUT_DIR="${1:-$SCRIPT_DIR/vsplugins-build}"
 WORK_DIR="$(mktemp -d)"
 JOBS="$(nproc)"
 
-# Keep in step with the macOS bundle's VapourSynth version (docs/16-macos-build.md).
-VS_TAG="R79"
+# Keep in step with VS_VERSION in deploy-tools.sh (R81, like the Windows trees; macOS stays on R79, docs/16-macos-build.md).
+VS_TAG="R81"
 
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -23,7 +23,7 @@ echo "Fetching vapoursynth core wheel (build SDK)..."
 SDK_DIR="$WORK_DIR/sdk"
 mkdir -p "$SDK_DIR"
 
-# Same release as the bundled core (VS_VERSION in deploy-tools.sh), not the newest: R80 dropped API 3.
+# Same release as the bundled core (VS_VERSION in deploy-tools.sh), not the newest.
 VS_WHEEL_URL=$(curl -s "https://pypi.org/pypi/vapoursynth/json" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
