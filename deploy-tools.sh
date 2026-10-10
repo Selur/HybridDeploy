@@ -224,6 +224,16 @@ fi
 cp -r "$GLSL_CLONE/GLSL" "$VS_PLUGDIR/"
 cp -r "$GLSL_CLONE/GLSL-Resizers" "$APPDIR/usr/bin/"
 
+# Hybrid's translations (docs 58) go next to the binary; qtbase_*.qm already sit in usr/translations (qt.conf).
+HYBRID_SRC="${HYBRID_SRC:-$SCRIPT_DIR/../Hybrid}"
+if ! ls "$HYBRID_SRC"/translations/hybrid_*.ts >/dev/null 2>&1; then
+  echo "  ❌ no translations/hybrid_*.ts in $HYBRID_SRC (set HYBRID_SRC to the Hybrid checkout)"
+  exit 1
+fi
+mkdir -p "$APPDIR/usr/bin/translations"
+cp "$HYBRID_SRC"/translations/hybrid_*.ts "$APPDIR/usr/bin/translations/"
+echo "  🌐 $(ls "$APPDIR"/usr/bin/translations/hybrid_*.ts | wc -l) translations from $HYBRID_SRC"
+
 # Stable, Python-version-independent paths for Hybrid's C++ side (Stufe E); "site-packages" name is required, see SystemHelper::resolveVapoursynthSitePackagesPath().
 ln -sf "python/lib/python3.14/site-packages" "$VS_DIR/site-packages"
 ln -sf "site-packages/vapoursynth/vspipe" "$VS_DIR/vspipe"
