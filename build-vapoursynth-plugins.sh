@@ -129,6 +129,19 @@ git clone --depth 1 --branch "$NEO_FFT_TAG" https://github.com/HomeOfAviSynthPlu
 cp "$NF_SRC/build/neo-fft.so" "$OUT_DIR/"
 echo "-> $OUT_DIR/neo-fft.so"
 
+# --- Step 3c: neo-smo (cmake; second implementation of rg, ttempsmooth, cnr, ccd beside zsmooth, docs 60) ---
+NEO_SMO_TAG="0.9.2"
+echo "=== Building neo-smo $NEO_SMO_TAG (cmake) ==="
+NS_SRC="$WORK_DIR/neo-smo"
+git clone --depth 1 --branch "$NEO_SMO_TAG" https://github.com/HomeOfAviSynthPlusEvolution/neo-smo.git "$NS_SRC"
+(
+  cd "$NS_SRC"
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DNEO_SMO_BUILD_AVISYNTH=OFF -DBUILD_TESTING=OFF
+  cmake --build build --target neo_smo -j"$JOBS"
+)
+cp "$NS_SRC/build/neo-smo.so" "$OUT_DIR/"
+echo "-> $OUT_DIR/neo-smo.so"
+
 # --- Step 4: RemoveDirt (cmake, vendors its own API4 headers) --------------
 
 echo "=== Building RemoveDirt (cmake) ==="
