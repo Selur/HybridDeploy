@@ -173,6 +173,8 @@ install_latest_release_wheel neo-vague-denoiser Selur/neo_Vague_Denoiser
 # both wheels put libvcm.so / libReduceFlicker.so into vapoursynth/plugins, same namespaces (vcm, rdfl) as the API 3 builds they replace
 install_latest_release_wheel vcm Selur/vcm
 install_latest_release_wheel ReduceFlicker Selur/ReduceFlicker
+# RemapFrames (Selur/Vapoursynth-RemapFrames, API 4, namespace remap): core.remap.Rfs for ApplyOnlyTo ranges and scene-change apply
+install_latest_release_wheel remapframes Selur/Vapoursynth-RemapFrames
 # DeblockPP7 (Selur/VapourSynth-DeblockPP7 v5: API 4 port, namespace pp7, libdeblockpp7.so)
 install_latest_release_wheel DeblockPP7 Selur/VapourSynth-DeblockPP7
 # FrFun7 (Selur/vapoursynth-frfun7 v1: API 4 port, 8 bit only, libfrfun7.so in vapoursynth/plugins, same namespace as the API 3 build it replaces)
