@@ -179,17 +179,18 @@ install_latest_release_wheel remapframes Selur/Vapoursynth-RemapFrames
 install_latest_release_wheel DeblockPP7 Selur/VapourSynth-DeblockPP7
 # FrFun7 (Selur/vapoursynth-frfun7 v1: API 4 port, 8 bit only, libfrfun7.so in vapoursynth/plugins, same namespace as the API 3 build it replaces)
 install_latest_release_wheel FrFun7 Selur/vapoursynth-frfun7
-
-# smoothuv (RainbowSmooth, docs 32, 6): API 4 port from AliceTeaParty/vapoursynth-api4-wheels, a third-party repo, so URL and SHA-256 are pinned.
-# The wheel also ships a RainbowSmooth.py without Hybrid's `tools` argument; Hybrid's vsscripts come first in sys.path, the copy is deleted anyway.
-SMOOTHUV_WHEEL="vapoursynth_smoothuv-3.1-py3-none-manylinux_2_27_x86_64.whl"
-SMOOTHUV_URL="https://github.com/AliceTeaParty/vapoursynth-api4-wheels/releases/download/vapoursynth-smoothuv-v3.1/$SMOOTHUV_WHEEL"
-SMOOTHUV_SHA256="8a2dd7a7aaf76751eb037cb77a6b45479dbdd1e01676738792a7973ff957eb68"
-echo "  📦 Installing smoothuv 3.1..."
-curl -sfL "${CURL_RETRY[@]}" -o "$DEPLOY_DIR/$SMOOTHUV_WHEEL" "$SMOOTHUV_URL" || { echo "  ❌ download of $SMOOTHUV_WHEEL failed"; exit 1; }
-echo "$SMOOTHUV_SHA256  $DEPLOY_DIR/$SMOOTHUV_WHEEL" | sha256sum -c - || exit 1
-"$VS_PY_BIN" -m pip install --disable-pip-version-check -q --no-deps "$DEPLOY_DIR/$SMOOTHUV_WHEEL"
-rm -f "$VS_PYTHON/lib/python3.14/site-packages/RainbowSmooth.py"
+# API 4 forks of plugins Hybrid uses (Hybrid docs 61), all with manylinux wheels that put the plugin into vapoursynth/plugins:
+# SmoothUV (RainbowSmooth; fixes the right chroma edge, odd interlaced chroma height and threshold 0/1), VFRToCFR, FixTelecinedFades (namespace ftf),
+# LGhost, assrender (libass, FreeType, FriBidi, HarfBuzz and fontconfig bundled by auditwheel)
+install_latest_release_wheel smoothuv Selur/vapoursynth-smoothuv
+install_latest_release_wheel VFRToCFR Selur/Vapoursynth-VFRToCFR
+install_latest_release_wheel FixTelecinedFades Selur/Fix-Telecined-Fades
+install_latest_release_wheel LGhost Selur/VapourSynth-LGhost
+install_latest_release_wheel assrender Selur/assrender
+# ncnn/Vulkan resizers, each in its own vapoursynth/plugins/<name>/ folder with its models (RealCUGAN 63 MB, SRMD 39 MB, RealSR 81 MB)
+install_latest_release_wheel RealCUGAN Selur/VapourSynth-RealCUGAN-ncnn-Vulkan
+install_latest_release_wheel SRMD Selur/VapourSynth-SRMD-ncnn-Vulkan
+install_latest_release_wheel RealSR Selur/VapourSynth-RealSR-ncnn-Vulkan
 
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
