@@ -191,6 +191,8 @@ install_latest_release_wheel assrender Selur/assrender
 install_latest_release_wheel RealCUGAN Selur/VapourSynth-RealCUGAN-ncnn-Vulkan
 install_latest_release_wheel SRMD Selur/VapourSynth-SRMD-ncnn-Vulkan
 install_latest_release_wheel RealSR Selur/VapourSynth-RealSR-ncnn-Vulkan
+# dpid (Selur/VapourSynth-dpid, API 4 port, namespace dpid, libdpid.so): resizer DPID and the downscale before resizing
+install_latest_release_wheel dpid Selur/VapourSynth-dpid
 
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
