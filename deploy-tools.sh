@@ -206,9 +206,11 @@ rm -f "$VS_PYTHON/bin/vspipe"
 VS_SITE="$VS_PYTHON/lib/python3.14/site-packages"
 VS_PLUGDIR="$VS_SITE/vapoursynth/plugins"
 
-echo "  🔧 Building the 12 plugins with no pip wheel (docs 32, 1)..."
+echo "  🔧 Building the 13 plugins with no pip wheel (docs 32, 1)..."
 "$SCRIPT_DIR/build-vapoursynth-plugins.sh" "$DEPLOY_DIR/vsplugins-build"
 cp "$DEPLOY_DIR"/vsplugins-build/*.so "$VS_PLUGDIR/"
+# OpenCL loader and libgomp of the Anime4KCPP build (RUNPATH $ORIGIN/../../vapoursynth_anime4kcpp.libs)
+cp -r "$DEPLOY_DIR/vsplugins-build/vapoursynth_anime4kcpp.libs" "$VS_SITE/"
 
 echo "  🔧 Installing vsconfig-write.py (fixes vspipe on python-build-standalone, docs 32, 2.1)..."
 cp "$SCRIPT_DIR/vsconfig-write.py" "$VS_SITE/vapoursynth/"

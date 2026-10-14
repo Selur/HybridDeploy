@@ -14,7 +14,7 @@ BUILD_PACKAGES=(
   libsdl2-dev libxml2-dev libfreetype-dev libfontconfig1-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev
   libxcb-shape0-dev libcmark-dev libtheora-dev libfribidi-dev ninja-build meson
   # build-vapoursynth-plugins.sh
-  libfftw3-dev libvulkan-dev python3
+  libfftw3-dev libvulkan-dev python3 ocl-icd-libopencl1
 )
 
 DEPLOY_PACKAGES=(

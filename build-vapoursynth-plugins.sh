@@ -142,6 +142,25 @@ git clone --depth 1 --branch "$NEO_SMO_TAG" https://github.com/HomeOfAviSynthPlu
 cp "$NS_SRC/build/neo-smo.so" "$OUT_DIR/"
 echo "-> $OUT_DIR/neo-smo.so"
 
+# --- Step 3d: Anime4KCPP (cmake; resizer Anime4KCPP, VapourSynth filter only, CPU and OpenCL, no CUDA) ---
+# OpenCL loader and libgomp go to site-packages/vapoursynth_anime4kcpp.libs/, the place auditwheel uses for the wheels
+A4K_TAG="v3.2.0"
+echo "=== Building Anime4KCPP $A4K_TAG (cmake) ==="
+A4K_SRC="$WORK_DIR/Anime4KCPP"
+git clone --depth 1 --branch "$A4K_TAG" https://github.com/TianZerL/Anime4KCPP.git "$A4K_SRC"
+(
+  cd "$A4K_SRC"
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DAC_BUILD_CLI=OFF -DAC_BUILD_FILTER_VAPOURSYNTH=ON -DAC_CORE_WITH_OPENCL=ON \
+    -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON '-DCMAKE_INSTALL_RPATH=$ORIGIN/../../vapoursynth_anime4kcpp.libs'
+  cmake --build build --target ac_filter_vs -j"$JOBS"
+)
+cp "$A4K_SRC/build/bin/libac_filter_vs.so" "$OUT_DIR/libanime4kcpp.so"
+mkdir -p "$OUT_DIR/vapoursynth_anime4kcpp.libs"
+for lib in libOpenCL.so.1 libgomp.so.1; do
+  cp -L "$(ldconfig -p | awk -v l="$lib" '$1 == l && /x86-64/ {print $NF; exit}')" "$OUT_DIR/vapoursynth_anime4kcpp.libs/$lib"
+done
+echo "-> $OUT_DIR/libanime4kcpp.so (+ vapoursynth_anime4kcpp.libs/)"
+
 # --- Step 4: RemoveDirt (cmake, vendors its own API4 headers) --------------
 
 echo "=== Building RemoveDirt (cmake) ==="
