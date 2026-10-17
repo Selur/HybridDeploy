@@ -168,6 +168,9 @@ RD_SRC="$WORK_DIR/RemoveDirt"
 git clone --depth 1 https://github.com/pinterf/RemoveDirt.git "$RD_SRC"
 (
   cd "$RD_SRC"
+  # RestoreMotionBlocks shares one block buffer across frames: fmParallel gives other frames per run (pinterf/RemoveDirt#5)
+  sed -i 's/restoreMotionBlocksFree, fmParallel, deps/restoreMotionBlocksFree, fmParallelRequests, deps/' RemoveDirt/RemoveDirt.cpp
+  grep -aq 'restoreMotionBlocksFree, fmParallelRequests, deps' RemoveDirt/RemoveDirt.cpp || { echo "RemoveDirt patch did not apply"; exit 1; }
   cmake .
   make -j"$JOBS"
 )
