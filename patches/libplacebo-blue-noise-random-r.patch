@@ -1,0 +1,42 @@
+diff --git a/src/dither.c b/src/dither.c
+index 13f68e4..666cd29 100644
+--- a/src/dither.c
++++ b/src/dither.c
+@@ -20,6 +20,8 @@
+  * The original code is taken from mpv, under the same license.
+  */
+ 
++// random_r()/initstate_r() of glibc
++#define _DEFAULT_SOURCE
+ 
+ #include <stdint.h>
+ #include <stdbool.h>
+@@ -72,6 +74,8 @@ struct ctx {
+     bool calcmat[MAX_SIZE2];
+     uint64_t gaussmat[MAX_SIZE2];
+     index_t unimat[MAX_SIZE2];
++    struct random_data rnd;
++    char rnd_state[128];
+ };
+ 
+ static void makegauss(struct ctx *k, unsigned int sizeb)
+@@ -159,7 +163,9 @@ static index_t getmin(struct ctx *k)
+         return k->randomat[0];
+     if (resnum == size2)
+         return size2 / 2;
+-    return k->randomat[rand() % resnum];
++    int32_t r;
++    random_r(&k->rnd, &r);
++    return k->randomat[r % resnum];
+ }
+ 
+ static void makeuniform(struct ctx *k)
+@@ -179,6 +185,8 @@ void pl_generate_blue_noise(float *data, int size)
+ 
+     pl_assert((1 << shift) == size);
+     struct ctx *k = pl_zalloc_ptr(NULL, k);
++    // own generator per LUT, seeded like an unseeded rand(): other rand() users in the process no longer change the LUT
++    initstate_r(1, k->rnd_state, sizeof(k->rnd_state), &k->rnd);
+     makegauss(k, shift);
+     makeuniform(k);
+     float invscale = k->size2;

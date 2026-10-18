@@ -1,0 +1,31 @@
+diff --git a/src/deband.c b/src/deband.c
+index b4ce5f2..f0b3223 100644
+--- a/src/deband.c
++++ b/src/deband.c
+@@ -18,7 +18,7 @@ typedef struct {
+     uint8_t frame_index;
+ } DebandData;
+ 
+-bool vspl_deband_do_image(DebandData *dbd_data, struct pl_frame *src_img, struct pl_frame *dst_img, VSCore *core, const VSAPI *vsapi)
++bool vspl_deband_do_image(DebandData *dbd_data, int n, struct pl_frame *src_img, struct pl_frame *dst_img, VSCore *core, const VSAPI *vsapi)
+ {
+     struct priv *p = dbd_data->vf;
+     bool ok = true;
+@@ -27,7 +27,7 @@ bool vspl_deband_do_image(DebandData *dbd_data, struct pl_frame *src_img, struct
+         pl_shader sh = pl_dispatch_begin(p->dp);
+         pl_shader_reset(sh, pl_shader_params(
+             .gpu = p->gpu,
+-            .index = dbd_data->frame_index++,
++            .index = (uint8_t) (n * src_img->num_planes + i),
+         ));
+ 
+         struct pl_sample_src *src = pl_sample_src(
+@@ -215,7 +215,7 @@ static const VSFrame *VS_CC VSPlaceboDebandGetFrame(int n, int activationReason,
+ 
+         dst_img.num_planes = src_img.num_planes;
+ 
+-        if (vspl_deband_do_image(dbd_data, &src_img, &dst_img, core, vsapi)) {
++        if (vspl_deband_do_image(dbd_data, n, &src_img, &dst_img, core, vsapi)) {
+             vspl_deband_download_planes(dbd_data, core, vsapi, dst, data, &dst_img);
+         }
+ 
