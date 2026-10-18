@@ -211,7 +211,8 @@ for pc in "shaderc 2026.1 shaderc_shared" "vulkan 1.4.341 vulkan" "dovi 3.3.2 do
 done
 # Ubuntu's libdovi-dev ships an empty rpu_parser.h, so the header comes from cbindgen on the tag of the wheel's libdovi
 git clone --depth 1 --branch libdovi-3.3.2 https://github.com/quietvoid/dovi_tool.git "$WORK_DIR/dovi_tool"
-(cd "$WORK_DIR/dovi_tool/dolby_vision" && cbindgen --quiet --config cbindgen.toml --output "$VSP_DEPS/include/libdovi/rpu_parser.h")
+# cbindgen calls cargo metadata; cargo comes from rustup (build-tools.sh), which is not on PATH by default
+(cd "$WORK_DIR/dovi_tool/dolby_vision" && PATH="$HOME/.cargo/bin:$PATH" cbindgen --quiet --config cbindgen.toml --output "$VSP_DEPS/include/libdovi/rpu_parser.h")
 grep -q 'dovi_parse_unspec62_nalu' "$VSP_DEPS/include/libdovi/rpu_parser.h" || { echo "rpu_parser.h from cbindgen is incomplete"; exit 1; }
 git clone --depth 1 --branch "$VSPLACEBO_VERSION" https://github.com/Lypheo/vs-placebo.git "$VSP_SRC"
 git init -q "$VSP_SRC/subprojects/libplacebo"
