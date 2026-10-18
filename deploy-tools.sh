@@ -92,6 +92,7 @@ VS_PY_BIN="$VS_PYTHON/bin/python3"
 "$VS_PY_BIN" -m ensurepip --upgrade >/dev/null 2>&1 || true
 
 # Core pin for every pip call (same as VS_TAG); R81 loads no API 3 plugins, bestsource stays 21 (docs 32, 7 and 56, 2 D).
+# vs-placebo stays at VSPLACEBO_VERSION of build-vapoursynth-plugins.sh, whose patched build replaces its plugin and libplacebo.
 VS_VERSION="81"
 echo "vapoursynth==$VS_VERSION" > "$DEPLOY_DIR/vs-constraints.txt"
 export PIP_CONSTRAINT="$DEPLOY_DIR/vs-constraints.txt"
@@ -118,7 +119,7 @@ vapoursynth-timecube vapoursynth-vivtc vapoursynth-tivtc
 vapoursynth-bifrost vapoursynth-vszip vapoursynth-vszipcu
 vapoursynth-vszipcl vapoursynth-zit vapoursynth-znedi3
 vapoursynth-zsmooth vapoursynth-oxidctf vapoursynth-composite
-vapoursynth-interlace vs-placebo vsnoise vsavd
+vapoursynth-interlace vs-placebo==2.0.4 vsnoise vsavd
 open-svpflow==0.1.0
 "
 echo "  📦 Installing pip wheelhouse..."
@@ -211,6 +212,11 @@ echo "  🔧 Building the 13 plugins with no pip wheel (docs 32, 1)..."
 cp "$DEPLOY_DIR"/vsplugins-build/*.so "$VS_PLUGDIR/"
 # OpenCL loader and libgomp of the Anime4KCPP build (RUNPATH $ORIGIN/../../vapoursynth_anime4kcpp.libs)
 cp -r "$DEPLOY_DIR/vsplugins-build/vapoursynth_anime4kcpp.libs" "$VS_SITE/"
+# Patched libplacebo of the vs-placebo build replaces the wheel's copy under the same renamed file name (libvs_placebo.so came with *.so)
+for lib in "$DEPLOY_DIR"/vsplugins-build/vs_placebo.libs/*; do
+  [ -f "$VS_SITE/vs_placebo.libs/$(basename "$lib")" ] || { echo "  ❌ $(basename "$lib") is not in the installed vs-placebo wheel (VSPLACEBO_VERSION in build-vapoursynth-plugins.sh)"; exit 1; }
+  cp "$lib" "$VS_SITE/vs_placebo.libs/"
+done
 
 echo "  🔧 Installing vsconfig-write.py (fixes vspipe on python-build-standalone, docs 32, 2.1)..."
 cp "$SCRIPT_DIR/vsconfig-write.py" "$VS_SITE/vapoursynth/"

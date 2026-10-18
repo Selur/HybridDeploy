@@ -177,6 +177,73 @@ git clone --depth 1 https://github.com/pinterf/RemoveDirt.git "$RD_SRC"
 cp "$RD_SRC/RemoveDirt/libremovedirt.so" "$OUT_DIR/"
 echo "-> $OUT_DIR/libremovedirt.so"
 
+# --- Step 4a: vs-placebo (meson; replaces libvs_placebo.so and libplacebo of the pip wheel) ---
+# Deband takes the shader index from frame number and plane instead of a running counter (Lypheo/vs-placebo#70), libplacebo's
+# blue noise LUT draws from its own random_r() state seeded like an unseeded rand() instead of the process-wide rand():
+# same output as the wheel with one thread, the same in every run with many (Hybrid docs 32).
+# Keep VSPLACEBO_VERSION in step with the vs-placebo pin in deploy-tools.sh; the build links against the libs bundled in that wheel.
+VSPLACEBO_VERSION="2.0.4"
+VSPLACEBO_LIBPLACEBO_COMMIT="a7a18af88ff0a17c04840dcb3246047bb6b46df3"
+echo "=== Building vs-placebo $VSPLACEBO_VERSION (meson, libplacebo ${VSPLACEBO_LIBPLACEBO_COMMIT:0:7}) ==="
+VSP_SRC="$WORK_DIR/vs-placebo"
+VSP_WHEEL="$WORK_DIR/vs-placebo-wheel"
+VSP_DEPS="$WORK_DIR/vs-placebo-deps"
+mkdir -p "$VSP_WHEEL" "$VSP_DEPS/lib" "$VSP_DEPS/pkgconfig" "$VSP_DEPS/include/libdovi"
+VSP_WHEEL_URL=$(curl -s "https://pypi.org/pypi/vs-placebo/$VSPLACEBO_VERSION/json" | python3 -c '
+import json, sys
+print(next(u["url"] for u in json.load(sys.stdin)["urls"] if u["filename"].endswith("manylinux_2_28_x86_64.whl")))
+')
+curl -sfL "$VSP_WHEEL_URL" -o "$WORK_DIR/vs-placebo.whl"
+python3 -c "import zipfile; zipfile.ZipFile('$WORK_DIR/vs-placebo.whl').extractall('$VSP_WHEEL')"
+VSP_LIBS="$VSP_WHEEL/vs_placebo.libs"
+VSP_LIBPLACEBO=$(basename "$VSP_LIBS"/libplacebo-*.so.*)
+# Link names for the wheel's renamed libs: the linker records their SONAMEs, so the plugin needs exactly these files at run time
+ln -s "$VSP_LIBS"/libshaderc_shared-*.so.* "$VSP_DEPS/lib/libshaderc_shared.so"
+ln -s "$VSP_LIBS"/libglslang-????????.so.* "$VSP_DEPS/lib/libglslang.so"
+ln -s "$VSP_LIBS"/libglslang-default-resource-limits-*.so.* "$VSP_DEPS/lib/libglslang-default-resource-limits.so"
+ln -s "$VSP_LIBS"/libSPIRV-????????.so.* "$VSP_DEPS/lib/libSPIRV.so"
+ln -s "$VSP_LIBS"/libvulkan-*.so.* "$VSP_DEPS/lib/libvulkan.so"
+ln -s "$VSP_LIBS"/libdovi-*.so.* "$VSP_DEPS/lib/libdovi.so"
+for pc in "shaderc 2026.1 shaderc_shared" "vulkan 1.4.341 vulkan" "dovi 3.3.2 dovi"; do
+  read -r pc_name pc_version pc_lib <<< "$pc"
+  printf 'Name: %s\nDescription: %s of the vs-placebo wheel\nVersion: %s\nLibs: -L%s -l%s\nCflags: -I%s\n' \
+    "$pc_name" "$pc_name" "$pc_version" "$VSP_DEPS/lib" "$pc_lib" "$VSP_DEPS/include" > "$VSP_DEPS/pkgconfig/$pc_name.pc"
+done
+# Ubuntu's libdovi-dev ships an empty rpu_parser.h, so the header comes from cbindgen on the tag of the wheel's libdovi
+git clone --depth 1 --branch libdovi-3.3.2 https://github.com/quietvoid/dovi_tool.git "$WORK_DIR/dovi_tool"
+(cd "$WORK_DIR/dovi_tool/dolby_vision" && cbindgen --quiet --config cbindgen.toml --output "$VSP_DEPS/include/libdovi/rpu_parser.h")
+grep -q 'dovi_parse_unspec62_nalu' "$VSP_DEPS/include/libdovi/rpu_parser.h" || { echo "rpu_parser.h from cbindgen is incomplete"; exit 1; }
+git clone --depth 1 --branch "$VSPLACEBO_VERSION" https://github.com/Lypheo/vs-placebo.git "$VSP_SRC"
+git init -q "$VSP_SRC/subprojects/libplacebo"
+(
+  cd "$VSP_SRC/subprojects/libplacebo"
+  git fetch -q --depth 1 https://github.com/haasn/libplacebo.git "$VSPLACEBO_LIBPLACEBO_COMMIT"
+  git checkout -q FETCH_HEAD
+  git submodule update -q --init --depth 1
+  git apply "$SCRIPT_DIR/patches/libplacebo-blue-noise-random-r.patch"
+)
+(
+  cd "$VSP_SRC"
+  git apply "$SCRIPT_DIR/patches/vs-placebo-deband-index.patch" "$SCRIPT_DIR/patches/vs-placebo-resample-math-h.patch"
+  # libplacebo finds glslang by find_library() and links it with a bare -l, so the link step needs LIBRARY_PATH too
+  export LIBRARY_PATH="$VSP_DEPS/lib"
+  # r73-compat takes the VapourSynth headers from the SDK's pkg-config file; the wheel's libplacebo has OpenGL, no lcms, no unwind
+  PKG_CONFIG_PATH="$VSP_DEPS/pkgconfig:$PKG_CONFIG_PATH" \
+    meson setup build --buildtype=release -Dr73-compat=true --force-fallback-for=libplacebo \
+    -Dlibplacebo:demos=false -Dlibplacebo:vulkan=enabled -Dlibplacebo:glslang=enabled -Dlibplacebo:shaderc=enabled \
+    -Dlibplacebo:opengl=enabled -Dlibplacebo:libdovi=enabled -Dlibplacebo:lcms=disabled -Dlibplacebo:unwind=disabled \
+    -Dlibplacebo:xxhash=disabled
+  ninja -C build -j"$JOBS"
+)
+grep -q ' U random_r' <(nm -D "$VSP_SRC/build/subprojects/libplacebo/src/libplacebo.so.371") || { echo "libplacebo patch did not apply"; exit 1; }
+mkdir -p "$OUT_DIR/vs_placebo.libs"
+cp "$VSP_SRC/build/libvs_placebo.so" "$OUT_DIR/"
+cp "$VSP_SRC/build/subprojects/libplacebo/src/libplacebo.so.371" "$OUT_DIR/vs_placebo.libs/$VSP_LIBPLACEBO"
+# Same layout as the wheel: DT_RPATH (passed on to the wheel's glslang, which has none) and libplacebo under its renamed SONAME
+patchelf --replace-needed libplacebo.so.371 "$VSP_LIBPLACEBO" --force-rpath --set-rpath '$ORIGIN/../../vs_placebo.libs' "$OUT_DIR/libvs_placebo.so"
+patchelf --set-soname "$VSP_LIBPLACEBO" --remove-rpath "$OUT_DIR/vs_placebo.libs/$VSP_LIBPLACEBO"
+echo "-> $OUT_DIR/libvs_placebo.so (+ vs_placebo.libs/$VSP_LIBPLACEBO)"
+
 # --- Step 5: RIFE (meson, ncnn+glslang as cmake subprojects) ---------------
 
 echo "=== Building RIFE (meson + ncnn subproject) ==="

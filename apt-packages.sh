@@ -15,6 +15,8 @@ BUILD_PACKAGES=(
   libxcb-shape0-dev libcmark-dev libtheora-dev libfribidi-dev ninja-build meson
   # build-vapoursynth-plugins.sh
   libfftw3-dev libvulkan-dev python3 ocl-icd-libopencl1
+  # vs-placebo build in build-vapoursynth-plugins.sh: headers only, it links against the libs of the wheel
+  libshaderc-dev glslang-dev cbindgen patchelf
 )
 
 DEPLOY_PACKAGES=(
