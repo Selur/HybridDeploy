@@ -1162,7 +1162,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   # Sicherstellen, dass pkg-config libwebp findet
   export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig:$PKG_CONFIG_PATH"
 
-  # Zurück zum Build-Ordner
+  # Back to the build folder
   cd "$top" || exit 1
 
 
@@ -1199,7 +1199,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   # PKG_CONFIG_PATH updaten, damit FFmpeg x264 findet
   export PKG_CONFIG_PATH="$top/libs/lib/pkgconfig:$PKG_CONFIG_PATH"
 
-  # Optional: prüfen, ob pkg-config x264 findet
+  # Optional: check that pkg-config finds x264
   echo "x264 version found by pkg-config: $(pkg-config --modversion x264 2>/dev/null || echo 'not found')"
 
     # --- x265 build ---
@@ -1208,7 +1208,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   # Multilib-Build (8/10/12bit in einem Rutsch)
   MAKEFLAGS="$MAKEFLAGS" ./multilib.sh
 
-  # Libraries zusammenführen (libx265_main, libx265_main10, libx265_main12 → libx265.a)
+  # Merge the libraries (libx265_main, libx265_main10, libx265_main12 -> libx265.a)
   cd 8bit
   ar -M <<EOF
 CREATE libx265.a

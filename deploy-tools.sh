@@ -424,7 +424,7 @@ DESKTOPEOF
   cp "$HERE/hybrid.png" "$ICON_DIR/hybrid.png" 2>/dev/null || true
 fi
 
-# Plattform-Auswahl: Wayland wenn verfügbar, sonst XCB
+# Platform: Wayland when available, else XCB
 if [ -n "${WAYLAND_DISPLAY:-}" ] && \
    { [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland.so" ] || [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland-generic.so" ]; }; then
   export QT_QPA_PLATFORM="wayland;xcb"
@@ -503,7 +503,7 @@ DESKTOPEOF
   cp "$HERE/hybrid.png" "$ICON_DIR/hybrid.png" 2>/dev/null || true
 fi
 
-# Plattform-Auswahl: Wayland wenn verfügbar, sonst XCB
+# Platform: Wayland when available, else XCB
 if [ -n "${WAYLAND_DISPLAY:-}" ] && \
    { [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland.so" ] || [ -f "$HERE/usr/lib/qt6/plugins/platforms/libqwayland-generic.so" ]; }; then
   export QT_QPA_PLATFORM="wayland;xcb"

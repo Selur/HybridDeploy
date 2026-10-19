@@ -145,12 +145,21 @@ echo "-> $OUT_DIR/neo-smo.so"
 # --- Step 3d: Anime4KCPP (cmake; resizer Anime4KCPP, VapourSynth filter only, CPU and OpenCL, no CUDA) ---
 # OpenCL loader and libgomp go to site-packages/vapoursynth_anime4kcpp.libs/, the place auditwheel uses for the wheels
 A4K_TAG="v3.2.0"
-echo "=== Building Anime4KCPP $A4K_TAG (cmake) ==="
+# stb master moved stb_image_resize2.h to deprecated/ (db69a229ae); the last commit before that keeps it at the top level
+A4K_STB_COMMIT="2b2e64bc4778df6a06fbea3a5dbe61f7a76ecf19"
+echo "=== Building Anime4KCPP $A4K_TAG (cmake, stb ${A4K_STB_COMMIT:0:7}) ==="
 A4K_SRC="$WORK_DIR/Anime4KCPP"
 git clone --depth 1 --branch "$A4K_TAG" https://github.com/TianZerL/Anime4KCPP.git "$A4K_SRC"
+git init -q "$WORK_DIR/stb"
+(
+  cd "$WORK_DIR/stb"
+  git fetch -q --depth 1 https://github.com/nothings/stb.git "$A4K_STB_COMMIT"
+  git checkout -q FETCH_HEAD
+)
 (
   cd "$A4K_SRC"
   cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DAC_BUILD_CLI=OFF -DAC_BUILD_FILTER_VAPOURSYNTH=ON -DAC_CORE_WITH_OPENCL=ON \
+    -DAC_PATH_STB="$WORK_DIR/stb" \
     -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON '-DCMAKE_INSTALL_RPATH=$ORIGIN/../../vapoursynth_anime4kcpp.libs'
   cmake --build build --target ac_filter_vs -j"$JOBS"
 )
