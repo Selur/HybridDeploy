@@ -1,0 +1,5 @@
+# build output of build-tools.sh and deploy-tools.sh
+tools/
+hybrid/
+*.AppImage
+*.7z
