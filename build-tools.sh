@@ -737,9 +737,7 @@ then
   cd "$base_dir"
   rm -rf build
   git clone --depth 1 https://aomedia.googlesource.com/aom build
-  # extract_encoder_settings() (common/webmenc.cc, used for every WebM output, i.e. for any -o that is not .ivf/.obu) passes the whole buffer size to
-  # every snprintf() instead of what is left behind `cur`; glibc's _FORTIFY_SOURCE aborts with "buffer overflow detected". Upstream bug since 2020 (checked
-  # against master 9469625e). The patch is a no-op once the line is fixed upstream.
+  # webmenc.cc gives every snprintf() the whole buffer size, _FORTIFY_SOURCE aborts WebM output; drop once fixed (aomedia.issues.chromium.org/issues/575506670, docs 32, 1)
   sed -i 's/snprintf(cur, total_size, /snprintf(cur, total_size - static_cast<size_t>(cur - result), /' build/common/webmenc.cc
   mkdir -p build/build-aom
   cd build/build-aom
