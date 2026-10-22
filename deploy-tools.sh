@@ -97,8 +97,8 @@ VS_VERSION="81"
 echo "vapoursynth==$VS_VERSION" > "$DEPLOY_DIR/vs-constraints.txt"
 export PIP_CONSTRAINT="$DEPLOY_DIR/vs-constraints.txt"
 
-# open-svpflow (Interframe/SVP and the SVP methods, docs 47) comes from pip, wheels are bit-identical to the pinned
-# nightly-20260930-baaaaaadcee8; the plugins land in site-packages/vapoursynth/plugins/open-svpflow/ (Autoload finds them).
+# open-svpflow (Interframe/SVP and the SVP methods, docs 47) comes from pip, 0.1.1 wheels are bit-identical to
+# nightly-20261015-deadbaddff1a; the plugins land in site-packages/vapoursynth/plugins/open-svpflow/ (Autoload finds them).
 # Packages confirmed to have a working manylinux wheel (docs 32, 1); dghdrtosdr excluded, win_amd64-only, see docs 32, 1.
 VS_PIP_PACKAGES="
 vapoursynth
@@ -112,7 +112,7 @@ vapoursynth-edgemasks vapoursynth-eedi3 vapoursynth-eedi3vk2
 vapoursynth-fillborders vapoursynth-ffms2 vapoursynth-fmtconv
 vapoursynth-hysteresis vapoursynth-iscombed vapoursynth-knlmeanscl
 vapoursynth-lsmas vapoursynth-readmpls
-vapoursynth-mvtools vapoursynth-nnedi3vk vapoursynth-knlmeansvk vapoursynth-feel
+vapoursynth-mvtools vapoursynth-nnedi3vk vapoursynth-knlmeansvk vapoursynth-feel>=1.2.0
 vapoursynth-nlm-ispc vapoursynth-resize2 vapoursynth-sangnom
 vapoursynth-scenechange vapoursynth-scxvid vapoursynth-sneedif vapoursynth-subtext
 vapoursynth-timecube vapoursynth-vivtc vapoursynth-tivtc
@@ -120,7 +120,7 @@ vapoursynth-bifrost vapoursynth-vszip vapoursynth-vszipcu
 vapoursynth-vszipcl vapoursynth-zit vapoursynth-znedi3
 vapoursynth-zsmooth vapoursynth-oxidctf vapoursynth-composite
 vapoursynth-interlace vs-placebo==2.0.4 vsnoise vsavd
-open-svpflow==0.1.0
+open-svpflow==0.1.1
 "
 echo "  📦 Installing pip wheelhouse..."
 for pkg in $VS_PIP_PACKAGES; do
