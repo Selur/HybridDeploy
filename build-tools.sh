@@ -1348,6 +1348,9 @@ $(cd build/theora && git rev-parse HEAD)
 https://code.videolan.org/videolan/dav1d.git
 $(cd build/dav1d && git rev-parse HEAD)
 
+https://github.com/georgmartius/vid.stab
+$(cd build/vid.stab && git rev-parse HEAD)
+
 https://github.com/xiph/flac
 $(cd build/flac && git rev-parse HEAD)
 
