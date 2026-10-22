@@ -2,7 +2,7 @@
 set -e
 
 MAKEFLAGS="-j4"
-FFMPEG_VERSION="n8.0.1"
+FFMPEG_VERSION="n8.0.3"
 
 base_dir=$(pwd)/tools/
 
