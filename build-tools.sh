@@ -1063,6 +1063,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   git clone --depth 1 https://github.com/xiph/vorbis
   git clone --depth 1 https://github.com/xiph/theora
   git clone --depth 1 https://github.com/xiph/flac
+  git clone --depth 1 https://github.com/georgmartius/vid.stab.git
   git clone --depth 1 https://code.videolan.org/videolan/dav1d.git
   git clone --depth 1 https://chromium.googlesource.com/webm/libvpx
   git clone --depth 1 https://chromium.googlesource.com/webm/libwebp
@@ -1121,6 +1122,9 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
 
   # dav1d (Meson, static) - AV1 software decoder for ffmpeg (libdav1d); ffmpeg's own av1 decoder only works with hardware acceleration
   build_ffdep dav1d meson "-Ddefault_library=static -Dlibdir=lib -Denable_tools=false -Denable_tests=false"
+
+  # vid.stab (CMake, static, OpenMP) - vidstabdetect/vidstabtransform for Hybrid's vidstab; libdir=lib keeps vidstab.pc in PKG_CONFIG_PATH
+  build_ffdep vid.stab cmake "-DBUILD_SHARED_LIBS=OFF -DUSE_OMP=ON -DCMAKE_INSTALL_LIBDIR=lib"
 
   # --- Opus (Autotools) ---
   cd opus
@@ -1286,6 +1290,7 @@ EOF
     --enable-libopencore-amrwb \
     --enable-libopus \
     --enable-libtheora \
+    --enable-libvidstab \
     --enable-libvo-amrwbenc \
     --enable-libvorbis \
     --enable-libvpx \
