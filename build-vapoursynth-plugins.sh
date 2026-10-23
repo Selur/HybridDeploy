@@ -15,6 +15,16 @@ VS_TAG="R81"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
 mkdir -p "$OUT_DIR"
+
+# vs-placebo needs meson >= 1.4 (Ubuntu 24.04 ships 1.3.2): meson is pure Python and runs from its release tarball
+MESON_VERSION="1.12.1"
+if ! printf '1.4.0\n%s\n' "$(meson --version)" | sort -C -V; then
+  curl -sL "https://github.com/mesonbuild/meson/releases/download/$MESON_VERSION/meson-$MESON_VERSION.tar.gz" | tar xz -C "$WORK_DIR"
+  mkdir -p "$WORK_DIR/bin"
+  printf '#!/bin/sh\nexec python3 "%s/meson-%s/meson.py" "$@"\n' "$WORK_DIR" "$MESON_VERSION" > "$WORK_DIR/bin/meson"
+  chmod +x "$WORK_DIR/bin/meson"
+  export PATH="$WORK_DIR/bin:$PATH"
+fi
 echo "Working directory: $WORK_DIR"
 echo "Output directory:  $OUT_DIR"
 
@@ -221,6 +231,9 @@ done
 # Ubuntu's libdovi-dev ships an empty rpu_parser.h, so the header comes from cbindgen on the tag of the wheel's libdovi
 git clone --depth 1 --branch libdovi-3.3.2 https://github.com/quietvoid/dovi_tool.git "$WORK_DIR/dovi_tool"
 # cbindgen calls cargo metadata; cargo comes from rustup (build-tools.sh), which is not on PATH by default
+# libdovi uses #[unsafe(no_mangle)] (Rust 2024), cbindgen < 0.28 can't parse it (Ubuntu 24.04 ships 0.26): newer one into ~/.cargo/bin
+cbindgen_ver=$(PATH="$HOME/.cargo/bin:$PATH" cbindgen --version | cut -d' ' -f2)
+printf '0.28.0\n%s\n' "$cbindgen_ver" | sort -C -V || PATH="$HOME/.cargo/bin:$PATH" cargo install --quiet --locked cbindgen
 (cd "$WORK_DIR/dovi_tool/dolby_vision" && PATH="$HOME/.cargo/bin:$PATH" cbindgen --quiet --config cbindgen.toml --output "$VSP_DEPS/include/libdovi/rpu_parser.h")
 grep -q 'dovi_parse_unspec62_nalu' "$VSP_DEPS/include/libdovi/rpu_parser.h" || { echo "rpu_parser.h from cbindgen is incomplete"; exit 1; }
 git clone --depth 1 --branch "$VSPLACEBO_VERSION" https://github.com/Lypheo/vs-placebo.git "$VSP_SRC"

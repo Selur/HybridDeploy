@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# System packages for build-tools.sh, build-vapoursynth-plugins.sh and deploy-tools.sh (package names of Ubuntu 26.04).
+# System packages for build-tools.sh, build-vapoursynth-plugins.sh and deploy-tools.sh (package names of Ubuntu 26.04, 24.04 differences below).
 # Sourced by those scripts, which only check; setup-root.sh installs them (the only step that needs sudo).
 
 BUILD_PACKAGES=(
@@ -26,6 +26,13 @@ DEPLOY_PACKAGES=(
   7zip rsync wget imagemagick patchelf libvo-amrwbenc-dev libvo-amrwbenc0
   libc6:i386 libstdc++6:i386 libgcc-s1:i386 libpthread-stubs0-dev:i386
 )
+
+# Ubuntu 24.04 (glibc 2.39 build): the Qt 6.4 GUI/Widgets packages carry the t64 suffix; the plain names are only
+# virtual there, apt installs them but dpkg-query reports them as not installed.
+if [ "$(. /etc/os-release && echo "$VERSION_ID")" = "24.04" ]; then
+  DEPLOY_PACKAGES=("${DEPLOY_PACKAGES[@]/#libqt6widgets6/libqt6widgets6t64}")
+  DEPLOY_PACKAGES=("${DEPLOY_PACKAGES[@]/#libqt6gui6/libqt6gui6t64}")
+fi
 
 # Prints the packages of the given list that are not installed.
 missing_packages() {

@@ -142,11 +142,17 @@ echo "  📦 Installing GitHub-release wheels (vinverse, grwrld)..."
 # because a release can keep the version of its metadata in the file name (MiniDeenNeo v1.1 ships *-1.0-*.whl).
 # GitHub (API and the signed release-asset redirect) now and then fails for a moment; a single failed request must not end a deploy that has run for minutes.
 CURL_RETRY=(--retry 3 --retry-delay 5 --retry-all-errors)
+# The release API allows 60 requests per hour and IP without a token (about three deploys); a GITHUB_TOKEN raises it to 5000.
+# A token without any scopes is enough (public repos); it goes to api.github.com only, never to the asset downloads.
+GITHUB_AUTH=()
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+  GITHUB_AUTH=(-H "Authorization: Bearer $GITHUB_TOKEN")
+fi
 # install_latest_release_wheel <label> <owner/repo>
 install_latest_release_wheel() {
   local label="$1" repo="$2" info tag url sha wheel
   echo "  📦 Installing $label (latest release of $repo)..."
-  info=$(curl -sfL "${CURL_RETRY[@]}" "https://api.github.com/repos/$repo/releases/latest" | "$VS_PY_BIN" -c '
+  info=$(curl -sfL "${CURL_RETRY[@]}" "${GITHUB_AUTH[@]}" "https://api.github.com/repos/$repo/releases/latest" | "$VS_PY_BIN" -c '
 import json, sys
 d = json.load(sys.stdin)
 for a in d["assets"]:
@@ -156,7 +162,7 @@ for a in d["assets"]:
         break
 else:
     sys.exit("no manylinux x86_64 wheel in the latest release")
-') || { echo "  ❌ could not resolve the latest $label release"; exit 1; }
+') || { echo "  ❌ could not resolve the latest $label release (GitHub API rate limit? set GITHUB_TOKEN)"; exit 1; }
   read -r tag url sha wheel <<< "$info"
   echo "     $tag ($wheel)"
   curl -sfL "${CURL_RETRY[@]}" -o "$DEPLOY_DIR/$wheel" "$url" || { echo "  ❌ download of $wheel failed"; exit 1; }
@@ -355,7 +361,8 @@ fi
 # recognizes sizes its own index.theme declares (checked against the system's hicolor/index.theme -
 # "1024x1024" isn't one of them, "512x512" is), so QIcon::fromTheme("hybrid") silently finds nothing
 # at 1024x1024 regardless of XDG_DATA_DIRS. Both uses share the same 512px downscale.
-magick "$ICON_PATH" -resize 512x512 "$APPDIR/hybrid.png"
+# ImageMagick 7 (Ubuntu 26.04) is "magick", ImageMagick 6 (Ubuntu 24.04) only has "convert"
+if command -v magick >/dev/null; then magick "$ICON_PATH" -resize 512x512 "$APPDIR/hybrid.png"; else convert "$ICON_PATH" -resize 512x512 "$APPDIR/hybrid.png"; fi
 cp "$APPDIR/hybrid.png" "$APPDIR/usr/share/icons/hicolor/512x512/apps/hybrid.png"
 
 cat <<EOF > "$APPDIR/usr/share/applications/hybrid.desktop"
@@ -534,7 +541,9 @@ cp "$APPDIR/usr/share/applications/hybrid.desktop" "$APPDIR/"
 cd "$DEPLOY_DIR"
 wget -q -O linuxdeploy-x86_64.AppImage https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage || true
 wget -q -O linuxdeploy-plugin-qt-x86_64.AppImage https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage || true
-wget -q -O appimagetool-x86_64.AppImage https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage || true
+# appimagetool from its own repo (AppImageKit is deprecated): its static runtime needs no libfuse2, neither here nor in the
+# Hybrid AppImage it writes (Ubuntu 24.04 does not install libfuse2t64 by default)
+wget -q -O appimagetool-x86_64.AppImage https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage || true
 chmod +x linuxdeploy-*.AppImage appimagetool-x86_64.AppImage || true
 
 export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib32"
