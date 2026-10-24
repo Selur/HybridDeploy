@@ -2,7 +2,7 @@
 set -e
 
 MAKEFLAGS="-j4"
-FFMPEG_VERSION="n8.0.3"
+FFMPEG_VERSION="n9.0.2"
 
 base_dir=$(pwd)/tools/
 
@@ -865,7 +865,7 @@ then
   # Selur/D2VWitch version 6: Qt 6, FFmpeg >= 7, VapourSynth API 4 (only VapourSynth4.h is needed), meson only. Its command line does not create a
   # QApplication, so it runs without a display and without a Qt platform plugin (the Qt5 based dubhater/D2VWitch needed one).
   git clone --depth 1 https://github.com/Selur/D2VWitch
-  git clone --depth 1 --branch release/8.0 https://github.com/FFmpeg/FFmpeg
+  git clone --depth 1 --branch "$FFMPEG_VERSION" https://github.com/FFmpeg/FFmpeg
   git clone --depth 1 --branch R81 https://github.com/vapoursynth/vapoursynth
 
   build_nasm
@@ -1065,6 +1065,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   git clone --depth 1 https://github.com/xiph/flac
   git clone --depth 1 https://github.com/georgmartius/vid.stab.git
   git clone --depth 1 https://code.videolan.org/videolan/dav1d.git
+  git clone --depth 1 --recurse-submodules https://github.com/sekrit-twc/zimg
   git clone --depth 1 https://chromium.googlesource.com/webm/libvpx
   git clone --depth 1 https://chromium.googlesource.com/webm/libwebp
   git clone --depth 1 https://code.videolan.org/videolan/x264.git
@@ -1125,6 +1126,9 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
 
   # vid.stab (CMake, static, OpenMP) - vidstabdetect/vidstabtransform for Hybrid's vidstab; libdir=lib keeps vidstab.pc in PKG_CONFIG_PATH
   build_ffdep vid.stab cmake "-DBUILD_SHARED_LIBS=OFF -DUSE_OMP=ON -DCMAKE_INSTALL_LIBDIR=lib"
+
+  # zimg (Autotools, static) - zscale for Hybrid's useFFToneMap (needs zscale and tonemap)
+  build_ffdep zimg autotools "--disable-shared"
 
   # --- Opus (Autotools) ---
   cd opus
@@ -1297,6 +1301,7 @@ EOF
     --enable-libwebp \
     --enable-libx264 \
     --enable-libx265 \
+    --enable-libzimg \
     --enable-libxcb \
     --enable-libxcb-shm \
     --enable-libxcb-xfixes \
@@ -1350,6 +1355,9 @@ $(cd build/dav1d && git rev-parse HEAD)
 
 https://github.com/georgmartius/vid.stab
 $(cd build/vid.stab && git rev-parse HEAD)
+
+https://github.com/sekrit-twc/zimg
+$(cd build/zimg && git rev-parse HEAD)
 
 https://github.com/xiph/flac
 $(cd build/flac && git rev-parse HEAD)

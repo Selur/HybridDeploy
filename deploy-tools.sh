@@ -99,7 +99,7 @@ export PIP_CONSTRAINT="$DEPLOY_DIR/vs-constraints.txt"
 
 # open-svpflow (Interframe/SVP and the SVP methods, docs 47) comes from pip, 0.1.1 wheels are bit-identical to
 # nightly-20261015-deadbaddff1a; the plugins land in site-packages/vapoursynth/plugins/open-svpflow/ (Autoload finds them).
-# dedot is built from upstream commit fbf60d9: PyPI 3.0 predates 16 bit support and only takes 8 bit (docs 32, 1).
+# dedot pinned to 4.0 (8-16 bit); 3.0 only takes 8 bit (docs 32, 1).
 # Packages confirmed to have a working manylinux wheel (docs 32, 1); dghdrtosdr excluded, win_amd64-only, see docs 32, 1.
 VS_PIP_PACKAGES="
 vapoursynth
@@ -108,7 +108,7 @@ vapoursynth-awarp vapoursynth-bestsource==21
 vapoursynth-bm3d vapoursynth-bm3dvk vapoursynth-bm3dvk2 vapoursynth-bwdif vapoursynth-cas vapoursynth-cdef
 vapoursynth-cranexpr vapoursynth-d2vsource vapoursynth-dctfilter vapoursynth-dfttest2-cpu
 vapoursynth-deblock vapoursynth-decross vapoursynth-descale
-vapoursynth-dedot@git+https://github.com/dubhatervapoursynth/vapoursynth-dedot.git@fbf60d9
+vapoursynth-dedot==4.0
 vapoursynth-descratch vapoursynth-dotkill vapoursynth-edgefixer
 vapoursynth-edgemasks vapoursynth-eedi3 vapoursynth-eedi3vk2
 vapoursynth-fillborders vapoursynth-ffms2 vapoursynth-fmtconv
