@@ -91,7 +91,7 @@ fi
 VS_PY_BIN="$VS_PYTHON/bin/python3"
 "$VS_PY_BIN" -m ensurepip --upgrade >/dev/null 2>&1 || true
 
-# Core pin for every pip call (same as VS_TAG); R81 loads no API 3 plugins, bestsource stays 21 (docs 32, 7 and 56, 2 D).
+# Core pin for every pip call (same as VS_TAG); R81 loads no API 3 plugins; bestsource 23, Hybrid writes neither hwdevice nor gpu here (docs 32, 7 and 56, 2 D).
 # vs-placebo stays at VSPLACEBO_VERSION of build-vapoursynth-plugins.sh, whose patched build replaces its plugin and libplacebo.
 VS_VERSION="81"
 echo "vapoursynth==$VS_VERSION" > "$DEPLOY_DIR/vs-constraints.txt"
@@ -104,7 +104,7 @@ export PIP_CONSTRAINT="$DEPLOY_DIR/vs-constraints.txt"
 VS_PIP_PACKAGES="
 vapoursynth
 vapoursynth-mvutensils vapoursynth-adaptivegrain vapoursynth-akarin
-vapoursynth-awarp vapoursynth-bestsource==21
+vapoursynth-awarp vapoursynth-bestsource==23
 vapoursynth-bm3d vapoursynth-bm3dvk vapoursynth-bm3dvk2 vapoursynth-bwdif vapoursynth-cas vapoursynth-cdef
 vapoursynth-cranexpr vapoursynth-d2vsource vapoursynth-dctfilter vapoursynth-dfttest2-cpu
 vapoursynth-deblock vapoursynth-decross vapoursynth-descale
@@ -204,6 +204,8 @@ install_latest_release_wheel RealSR Selur/VapourSynth-RealSR-ncnn-Vulkan
 install_latest_release_wheel dpid Selur/VapourSynth-dpid
 # AWarpSharp2 (Selur/vapoursynth-awarpsharp2, API 4 port, namespace warp, libawarpsharp2.so): tools value warp next to awarp
 install_latest_release_wheel AWarpSharp2 Selur/vapoursynth-awarpsharp2
+# ExBlend (Selur/ExBlend, namespace exblend, libExBlend.so): VsExBlend and VsAnimDeblend (Hybrid docs 68)
+install_latest_release_wheel ExBlend Selur/ExBlend
 
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
@@ -217,7 +219,7 @@ rm -f "$VS_PYTHON/bin/vspipe"
 VS_SITE="$VS_PYTHON/lib/python3.14/site-packages"
 VS_PLUGDIR="$VS_SITE/vapoursynth/plugins"
 
-echo "  🔧 Building the 13 plugins with no pip wheel (docs 32, 1)..."
+echo "  🔧 Building the 11 plugins with no pip wheel (docs 32, 1)..."
 "$SCRIPT_DIR/build-vapoursynth-plugins.sh" "$DEPLOY_DIR/vsplugins-build"
 cp "$DEPLOY_DIR"/vsplugins-build/*.so "$VS_PLUGDIR/"
 # OpenCL loader and libgomp of the Anime4KCPP build (RUNPATH $ORIGIN/../../vapoursynth_anime4kcpp.libs)

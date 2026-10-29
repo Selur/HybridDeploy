@@ -180,6 +180,20 @@ for lib in libOpenCL.so.1 libgomp.so.1; do
 done
 echo "-> $OUT_DIR/libanime4kcpp.so (+ vapoursynth_anime4kcpp.libs/)"
 
+# --- Step 3e: AvsInpaint (cmake; InpaintDelogo, VapourSynth interface only, docs 69) ---
+# The release ships Windows DLLs only; the tag vendors its API 4 headers. OUTPUT_NAME is lowercased outside MSVC: libavsinpaint.so
+AVSINPAINT_TAG="v1.4"
+echo "=== Building AvsInpaint $AVSINPAINT_TAG (cmake) ==="
+AI_SRC="$WORK_DIR/AvsInpaint"
+git clone --depth 1 --branch "$AVSINPAINT_TAG" https://github.com/pinterf/AvsInpaint.git "$AI_SRC"
+(
+  cd "$AI_SRC"
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_AVISYNTH=OFF
+  cmake --build build -j"$JOBS"
+)
+cp "$AI_SRC/build/avsinpaint/libavsinpaint.so" "$OUT_DIR/"
+echo "-> $OUT_DIR/libavsinpaint.so"
+
 # --- Step 4: RemoveDirt (cmake, vendors its own API4 headers) --------------
 
 echo "=== Building RemoveDirt (cmake) ==="
