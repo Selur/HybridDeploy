@@ -357,7 +357,8 @@ then
   git clone --depth 1 https://github.com/FreewareAdvancedAudio/faac build
   cd build
   meson setup out --buildtype=release -Ddecoder=false -Dmuxer=false -Dresampler=false -Dfrontend-static=true
-  ninja -C out
+  # only the faac target: the always-built frontend tests (test_rf64_input) miss the dependency on the generated git_version.h
+  ninja -C out frontend/faac
   strip out/frontend/faac
   cp -f out/frontend/faac "$base_dir"
   cd "$base_dir"
