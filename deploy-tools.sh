@@ -121,7 +121,7 @@ vapoursynth-timecube vapoursynth-vivtc vapoursynth-tivtc
 vapoursynth-bifrost vapoursynth-vszip vapoursynth-vszipcu
 vapoursynth-vszipcl vapoursynth-zit vapoursynth-znedi3
 vapoursynth-zsmooth vapoursynth-oxidctf vapoursynth-composite
-vapoursynth-interlace vs-placebo==2.0.4 vsnoise vsavd
+vapoursynth-interlace vs-placebo==2.0.4 vsnoise vsavd vapoursynth-atools
 open-svpflow==0.1.1
 "
 echo "  📦 Installing pip wheelhouse..."
