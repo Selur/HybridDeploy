@@ -801,6 +801,10 @@ then
   cd "$base_dir"
   rm -rf x265
   git clone --depth 1 https://bitbucket.org/multicoreware/x265_git.git x265
+  # Version.cmake reads the last release tag and the distance to it, a depth-1 clone reports "unknown": deepen until a tag is reachable
+  until git -C x265 describe --abbrev=0 --tags >/dev/null 2>&1; do
+    git -C x265 fetch -q --deepen=100
+  done
   x265_cstdint_fix x265
   mv x265 build
 
