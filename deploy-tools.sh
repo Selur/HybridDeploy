@@ -219,9 +219,9 @@ rm -f "$VS_PYTHON/bin/vspipe"
 VS_SITE="$VS_PYTHON/lib/python3.14/site-packages"
 VS_PLUGDIR="$VS_SITE/vapoursynth/plugins"
 
-echo "  🔧 Building the 11 plugins with no pip wheel (docs 32, 1)..."
+echo "  🔧 Building the 12 plugins with no pip wheel (docs 32, 1)..."
 "$SCRIPT_DIR/build-vapoursynth-plugins.sh" "$DEPLOY_DIR/vsplugins-build"
-cp "$DEPLOY_DIR"/vsplugins-build/*.so "$VS_PLUGDIR/"
+cp "$DEPLOY_DIR"/vsplugins-build/*.so "$DEPLOY_DIR"/vsplugins-build/*-LICENSE.txt "$VS_PLUGDIR/"
 # OpenCL loader and libgomp of the Anime4KCPP build (RUNPATH $ORIGIN/../../vapoursynth_anime4kcpp.libs)
 cp -r "$DEPLOY_DIR/vsplugins-build/vapoursynth_anime4kcpp.libs" "$VS_SITE/"
 # Patched libplacebo of the vs-placebo build replaces the wheel's copy under the same renamed file name (libvs_placebo.so came with *.so)

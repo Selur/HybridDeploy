@@ -194,6 +194,22 @@ git clone --depth 1 --branch "$AVSINPAINT_TAG" https://github.com/pinterf/AvsInp
 cp "$AI_SRC/build/avsinpaint/libavsinpaint.so" "$OUT_DIR/"
 echo "-> $OUT_DIR/libavsinpaint.so"
 
+# --- Step 3f: Faveworm (autotools; audio scope of Hybrid's Vapoursynth preview, docs 72) ---
+# No Linux release; the tag vendors VapourSynth4.h. configure always adds -g3, so the copy is stripped
+FAVEWORM_TAG="r2"
+echo "=== Building Faveworm $FAVEWORM_TAG (autotools) ==="
+FW_SRC="$WORK_DIR/faveworm"
+git clone --depth 1 --branch "$FAVEWORM_TAG" https://gitlab.com/EleonoreMizo/faveworm.git "$FW_SRC"
+(
+  cd "$FW_SRC/build/unix"
+  ./autogen.sh
+  ./configure
+  make -j"$JOBS" libfaveworm.la
+)
+strip --strip-unneeded -o "$OUT_DIR/libfaveworm.so" "$FW_SRC/build/unix/.libs/libfaveworm.so"
+cp "$FW_SRC/COPYING" "$OUT_DIR/faveworm-LICENSE.txt"
+echo "-> $OUT_DIR/libfaveworm.so"
+
 # --- Step 4: RemoveDirt (cmake, vendors its own API4 headers) --------------
 
 echo "=== Building RemoveDirt (cmake) ==="

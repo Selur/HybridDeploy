@@ -353,14 +353,13 @@ then
   echo "building FAAC,..."
   cd "$base_dir"
   rm -rf build
-  git clone https://github.com/knik0/faac build
+  # faac 3 lives in FreewareAdvancedAudio/faac (knik0/faac is deprecated) and is untagged master, like the Windows build; meson only
+  git clone --depth 1 https://github.com/FreewareAdvancedAudio/faac build
   cd build
-  git checkout $(git tag --list | grep '^[1-9]' | sort -V | tail -1)
-  ./bootstrap
-  ./configure --disable-shared
-  make $MAKEFLAGS
-  strip frontend/faac
-  cp -f frontend/faac "$base_dir"
+  meson setup out --buildtype=release -Ddecoder=false -Dmuxer=false -Dresampler=false -Dfrontend-static=true
+  ninja -C out
+  strip out/frontend/faac
+  cp -f out/frontend/faac "$base_dir"
   cd "$base_dir"
   rm -rf build
 fi
