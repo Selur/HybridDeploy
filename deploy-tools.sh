@@ -31,7 +31,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 version=$(date +"%Y.%m.%d.1")
-OUT_APPIMAGE="$SCRIPT_DIR/Hybrid-$version-x86_64.AppImage"
+# A 24.04 build runs on older glibc, the 26.04 build needs glibc 2.43 (docs 32): the name tells them apart.
+name_suffix=""
+if [ "$(. /etc/os-release && echo "${VERSION_ID:-}")" = "24.04" ]; then
+  name_suffix="_oldGlibc"
+fi
+OUT_APPIMAGE="$SCRIPT_DIR/Hybrid-$version-x86_64$name_suffix.AppImage"
 echo "🧱 Building Hybrid version: $version -> $OUT_APPIMAGE"
 
 # --- Verify binaries ---
