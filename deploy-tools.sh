@@ -123,7 +123,7 @@ vapoursynth-mvtools vapoursynth-nnedi3vk vapoursynth-knlmeansvk vapoursynth-feel
 vapoursynth-nlm-ispc vapoursynth-resize2 vapoursynth-sangnom
 vapoursynth-scenechange vapoursynth-scxvid vapoursynth-sneedif vapoursynth-subtext
 vapoursynth-timecube vapoursynth-vivtc vapoursynth-tivtc
-vapoursynth-bifrost vapoursynth-vszip vapoursynth-vszipcu
+vapoursynth-bifrost vapoursynth-vszip==24.0.0 vapoursynth-vszipcu
 vapoursynth-vszipcl vapoursynth-zit vapoursynth-znedi3
 vapoursynth-zsmooth vapoursynth-oxidctf vapoursynth-composite
 vapoursynth-interlace vs-placebo==2.0.4 vsnoise vsavd vapoursynth-atools
@@ -417,6 +417,8 @@ if [ -x "$VS_PYTHON/bin/python3" ]; then
   export PYTHONHOME="$VS_PYTHON"
   export PYTHONPATH="$VS_PYTHON/lib/python3.14/site-packages"
   export PATH="$VS_PYTHON/bin:$VS_PYTHON/lib/python3.14/site-packages/vapoursynth:$PATH"
+  # A host libvapoursynth.so.4 in LD_LIBRARY_PATH beats the module's RUNPATH; an older one fails vspipe (docs 32, 2.1).
+  export LD_LIBRARY_PATH="$VS_PYTHON/lib/python3.14/site-packages/vapoursynth:$LD_LIBRARY_PATH"
   "$VS_PYTHON/bin/python3" \
     "$VS_PYTHON/lib/python3.14/site-packages/vapoursynth/vsconfig-write.py" >/dev/null 2>&1 || true
 fi
@@ -496,6 +498,8 @@ if [ -x "$VS_PYTHON/bin/python3" ]; then
   export PYTHONHOME="$VS_PYTHON"
   export PYTHONPATH="$VS_PYTHON/lib/python3.14/site-packages"
   export PATH="$VS_PYTHON/bin:$VS_PYTHON/lib/python3.14/site-packages/vapoursynth:$PATH"
+  # A host libvapoursynth.so.4 in LD_LIBRARY_PATH beats the module's RUNPATH; an older one fails vspipe (docs 32, 2.1).
+  export LD_LIBRARY_PATH="$VS_PYTHON/lib/python3.14/site-packages/vapoursynth:$LD_LIBRARY_PATH"
   "$VS_PYTHON/bin/python3" \
     "$VS_PYTHON/lib/python3.14/site-packages/vapoursynth/vsconfig-write.py" >/dev/null 2>&1 || true
 fi
