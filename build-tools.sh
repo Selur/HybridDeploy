@@ -153,12 +153,16 @@ then
   rm -rf build
   mkdir build
   cd build
-  git clone --depth 1 https://github.com/justdan96/tsMuxer
+  git clone --depth 1 https://github.com/teaching-droid/tsMuxer
   cd tsMuxer
   # Fix CMake >= 4.x compatibility everywhere
   find . -name CMakeLists.txt -print0 | xargs -0 sed -i 's/cmake_minimum_required *(VERSION \([0-2]\|3\.[0-4]\))/cmake_minimum_required(VERSION 3.5)/'
 
-  ./scripts/rebuild_linux.sh
+  # CLI only: the fork builds the Qt GUI whenever Qt6 is found (needs Qt6LinguistTools)
+  cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DTSMUXER_GUI=OFF
+  ninja -C build
+  mkdir -p bin
+  cp build/tsMuxer/tsmuxer bin/tsMuxeR
   cd bin
   strip tsMuxeR
   chmod a+x tsMuxeR
