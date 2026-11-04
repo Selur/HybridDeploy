@@ -2,9 +2,19 @@
 set -e
 
 MAKEFLAGS="-j4"
-FFMPEG_VERSION="n9.0.2"
+# Same FFmpeg master commit as Hybrid's Windows ffmpeg.exe; FFMPEG_VERSION is the string `ffmpeg -version` reports.
+FFMPEG_COMMIT="b034eb5e7e871b033e389ae52a933509bd8090c6"
+FFMPEG_VERSION="N-128293-gb034eb5e7e"
 
 base_dir=$(pwd)/tools/
+
+# Shallow clone of FFMPEG_COMMIT into $1; FF_VERSION restores the version string a shallow clone cannot describe.
+clone_ffmpeg () {
+  git init -q "$1"
+  git -C "$1" fetch -q --depth 1 https://github.com/FFmpeg/FFmpeg "$FFMPEG_COMMIT"
+  git -C "$1" checkout -q FETCH_HEAD
+  echo "$FFMPEG_VERSION" > "$1/FF_VERSION"
+}
 
 build_nasm () {
   # The system nasm (Ubuntu 26.04: 3.01) is new enough; 2.14.02 no longer compiles with GCC 15 (C23: "#typedef", bool).
@@ -873,7 +883,7 @@ then
   # Selur/D2VWitch version 6: Qt 6, FFmpeg >= 7, VapourSynth API 4 (only VapourSynth4.h is needed), meson only. Its command line does not create a
   # QApplication, so it runs without a display and without a Qt platform plugin (the Qt5 based dubhater/D2VWitch needed one).
   git clone --depth 1 https://github.com/Selur/D2VWitch
-  git clone --depth 1 --branch "$FFMPEG_VERSION" https://github.com/FFmpeg/FFmpeg
+  clone_ffmpeg FFmpeg
   git clone --depth 1 --branch R81 https://github.com/vapoursynth/vapoursynth
 
   build_nasm
@@ -930,7 +940,7 @@ then
   git clone --depth 1 https://code.videolan.org/videolan/x264.git
   git clone --depth 1 https://github.com/l-smash/l-smash
   git clone --depth 1 https://github.com/FFMS/ffms2
-  git clone --depth 1 --branch "$FFMPEG_VERSION" https://github.com/FFmpeg/FFmpeg
+  clone_ffmpeg FFmpeg
 
   build_nasm
 
@@ -1030,7 +1040,7 @@ then
   echo "building SVT-AV1,..."
   cd "$base_dir"
   rm -rf build
-  git clone --depth 1 -b v4.0.1 https://gitlab.com/AOMediaCodec/SVT-AV1.git build
+  git clone --depth 1 -b v4.3.0 https://gitlab.com/AOMediaCodec/SVT-AV1.git build
   mkdir -p build/build
   cd build/build
   cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
@@ -1055,7 +1065,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   export PKG_CONFIG_PATH="$LIBS/lib/pkgconfig:$PKG_CONFIG_PATH"
 
   # Clone sources
-  git clone --depth 1 --branch "$FFMPEG_VERSION" https://github.com/FFmpeg/FFmpeg ffmpeg-src
+  clone_ffmpeg ffmpeg-src
   git clone --depth 1 https://github.com/fribidi/fribidi
   git clone --depth 1 https://github.com/harfbuzz/harfbuzz
   cd harfbuzz
