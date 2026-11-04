@@ -140,7 +140,8 @@ cp "$NF_SRC/build/neo-fft.so" "$OUT_DIR/"
 echo "-> $OUT_DIR/neo-fft.so"
 
 # --- Step 3c: neo-smo (cmake; second implementation of rg, ttempsmooth, cnr, ccd beside zsmooth, docs 60) ---
-NEO_SMO_TAG="0.9.2"
+# Not the linux-x64 release zip: 0.9.3 is built against glibc 2.43 (sqrtf@GLIBC_2.43), too new for the 24.04 AppImage
+NEO_SMO_TAG="0.9.3"
 echo "=== Building neo-smo $NEO_SMO_TAG (cmake) ==="
 NS_SRC="$WORK_DIR/neo-smo"
 git clone --depth 1 --branch "$NEO_SMO_TAG" https://github.com/HomeOfAviSynthPlusEvolution/neo-smo.git "$NS_SRC"
