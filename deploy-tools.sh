@@ -96,13 +96,13 @@ fi
 VS_PY_BIN="$VS_PYTHON/bin/python3"
 "$VS_PY_BIN" -m ensurepip --upgrade >/dev/null 2>&1 || true
 
-# Core pin for every pip call (same as VS_TAG); R81 loads no API 3 plugins; bestsource 23, Hybrid writes neither hwdevice nor gpu here (docs 32, 7 and 56, 2 D).
+# Core pin for every pip call (same as VS_TAG); R80+ loads no API 3 plugins; bestsource 23, Hybrid writes neither hwdevice nor gpu here (docs 32, 7 and 56, 2 D).
 # vs-placebo stays at VSPLACEBO_VERSION of build-vapoursynth-plugins.sh, whose patched build replaces its plugin and libplacebo.
-VS_VERSION="81"
+VS_VERSION="82"
 echo "vapoursynth==$VS_VERSION" > "$DEPLOY_DIR/vs-constraints.txt"
 export PIP_CONSTRAINT="$DEPLOY_DIR/vs-constraints.txt"
 
-# open-svpflow (Interframe/SVP and the SVP methods, docs 47) comes from pip, 0.1.1 wheels are bit-identical to
+# open-svpflow (Interframe/SVP and the SVP methods, docs 47) comes from pip, 0.1.2 (manylinux_2_34) is bit-identical to 0.1.1 and
 # nightly-20261015-deadbaddff1a; the plugins land in site-packages/vapoursynth/plugins/open-svpflow/ (Autoload finds them).
 # dedot pinned to 4.0 (8-16 bit); 3.0 only takes 8 bit (docs 32, 1).
 # Packages confirmed to have a working manylinux wheel (docs 32, 1); dghdrtosdr excluded, win_amd64-only, see docs 32, 1.
@@ -119,15 +119,15 @@ vapoursynth-edgemasks vapoursynth-eedi3 vapoursynth-eedi3vk2
 vapoursynth-fillborders vapoursynth-ffms2 vapoursynth-fmtconv
 vapoursynth-hysteresis vapoursynth-iscombed vapoursynth-knlmeanscl
 vapoursynth-lsmas vapoursynth-readmpls
-vapoursynth-mvtools vapoursynth-nnedi3vk vapoursynth-knlmeansvk vapoursynth-feel>=1.2.0
+vapoursynth-mvtools vapoursynth-nnedi3vk vapoursynth-knlmeansvk vapoursynth-feel==1.3.4
 vapoursynth-nlm-ispc vapoursynth-resize2 vapoursynth-sangnom
 vapoursynth-scenechange vapoursynth-scxvid vapoursynth-sneedif vapoursynth-subtext
 vapoursynth-timecube vapoursynth-vivtc vapoursynth-tivtc
 vapoursynth-bifrost vapoursynth-vszip==24.0.0 vapoursynth-vszipcu
 vapoursynth-vszipcl vapoursynth-zit vapoursynth-znedi3
 vapoursynth-zsmooth vapoursynth-oxidctf vapoursynth-composite
-vapoursynth-interlace vs-placebo==2.0.4 vsnoise vsavd vapoursynth-atools
-open-svpflow==0.1.1
+vapoursynth-interlace vs-placebo==2.0.5 vsnoise vsavd vapoursynth-atools
+open-svpflow==0.1.2
 "
 echo "  📦 Installing pip wheelhouse..."
 for pkg in $VS_PIP_PACKAGES; do

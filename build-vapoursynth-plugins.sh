@@ -9,8 +9,8 @@ OUT_DIR="${1:-$SCRIPT_DIR/vsplugins-build}"
 WORK_DIR="$(mktemp -d)"
 JOBS="$(nproc)"
 
-# Keep in step with VS_VERSION in deploy-tools.sh (R81, like the Windows trees; macOS stays on R79, docs/16-macos-build.md).
-VS_TAG="R81"
+# Keep in step with VS_VERSION in deploy-tools.sh (R82, like the Windows trees; macOS see docs/16-macos-build.md).
+VS_TAG="R82"
 
 trap 'rm -rf "$WORK_DIR"' EXIT
 
@@ -39,7 +39,8 @@ import json, sys
 d = json.load(sys.stdin)
 v = sys.argv[1]
 for u in d["releases"][v]:
-    if "manylinux" in u["filename"] and "x86_64" in u["filename"] and "aarch64" not in u["filename"]:
+    # R82 ships a cp312-abi3 and a free-threaded cp315t wheel; the SDK comes from the abi3 one
+    if "manylinux" in u["filename"] and "x86_64" in u["filename"] and "aarch64" not in u["filename"] and "abi3" in u["filename"]:
         print(u["url"])
         break
 ' "${VS_TAG#R}")
@@ -228,13 +229,16 @@ cp "$RD_SRC/RemoveDirt/libremovedirt.so" "$OUT_DIR/"
 echo "-> $OUT_DIR/libremovedirt.so"
 
 # --- Step 4a: vs-placebo (meson; replaces libvs_placebo.so and libplacebo of the pip wheel) ---
-# Deband takes the shader index from frame number and plane instead of a running counter (Lypheo/vs-placebo#70), libplacebo's
-# blue noise LUT draws from its own random_r() state seeded like an unseeded rand() instead of the process-wide rand():
-# same output as the wheel with one thread, the same in every run with many (Hybrid docs 32).
+# libplacebo's blue noise LUT draws from its own random_r() state seeded like an unseeded rand() instead of the process-wide rand()
+# (haasn/libplacebo#382): same output as the wheel with one thread, the same in every run with many (Hybrid docs 32).
+# The Deband shader index fix (Lypheo/vs-placebo#70) and the math.h include are part of 2.0.5, vs-placebo itself builds unpatched.
 # Keep VSPLACEBO_VERSION in step with the vs-placebo pin in deploy-tools.sh; the build links against the libs bundled in that wheel.
-VSPLACEBO_VERSION="2.0.4"
-VSPLACEBO_LIBPLACEBO_COMMIT="a7a18af88ff0a17c04840dcb3246047bb6b46df3"
-echo "=== Building vs-placebo $VSPLACEBO_VERSION (meson, libplacebo ${VSPLACEBO_LIBPLACEBO_COMMIT:0:7}) ==="
+# The libplacebo ref is the revision in subprojects/libplacebo.wrap of that tag; VSPLACEBO_LIBPLACEBO_API is the API number of its SONAME,
+# the same as in the file name of the wheel's libplacebo (libplacebo-<hash>.so.<API>).
+VSPLACEBO_VERSION="2.0.5"
+VSPLACEBO_LIBPLACEBO_REF="v7.387.0"
+VSPLACEBO_LIBPLACEBO_API="387"
+echo "=== Building vs-placebo $VSPLACEBO_VERSION (meson, libplacebo $VSPLACEBO_LIBPLACEBO_REF) ==="
 VSP_SRC="$WORK_DIR/vs-placebo"
 VSP_WHEEL="$WORK_DIR/vs-placebo-wheel"
 VSP_DEPS="$WORK_DIR/vs-placebo-deps"
@@ -271,14 +275,13 @@ git clone --depth 1 --branch "$VSPLACEBO_VERSION" https://github.com/Lypheo/vs-p
 git init -q "$VSP_SRC/subprojects/libplacebo"
 (
   cd "$VSP_SRC/subprojects/libplacebo"
-  git fetch -q --depth 1 https://github.com/haasn/libplacebo.git "$VSPLACEBO_LIBPLACEBO_COMMIT"
+  git fetch -q --depth 1 https://github.com/haasn/libplacebo.git "$VSPLACEBO_LIBPLACEBO_REF"
   git checkout -q FETCH_HEAD
   git submodule update -q --init --depth 1
   git apply "$SCRIPT_DIR/patches/libplacebo-blue-noise-random-r.patch"
 )
 (
   cd "$VSP_SRC"
-  git apply "$SCRIPT_DIR/patches/vs-placebo-deband-index.patch" "$SCRIPT_DIR/patches/vs-placebo-resample-math-h.patch"
   # libplacebo finds glslang by find_library() and links it with a bare -l, so the link step needs LIBRARY_PATH too
   export LIBRARY_PATH="$VSP_DEPS/lib"
   # r73-compat takes the VapourSynth headers from the SDK's pkg-config file; the wheel's libplacebo has OpenGL, no lcms, no unwind
@@ -289,12 +292,12 @@ git init -q "$VSP_SRC/subprojects/libplacebo"
     -Dlibplacebo:xxhash=disabled
   ninja -C build -j"$JOBS"
 )
-grep -q ' U random_r' <(nm -D "$VSP_SRC/build/subprojects/libplacebo/src/libplacebo.so.371") || { echo "libplacebo patch did not apply"; exit 1; }
+grep -q ' U random_r' <(nm -D "$VSP_SRC/build/subprojects/libplacebo/src/libplacebo.so.$VSPLACEBO_LIBPLACEBO_API") || { echo "libplacebo patch did not apply"; exit 1; }
 mkdir -p "$OUT_DIR/vs_placebo.libs"
 cp "$VSP_SRC/build/libvs_placebo.so" "$OUT_DIR/"
-cp "$VSP_SRC/build/subprojects/libplacebo/src/libplacebo.so.371" "$OUT_DIR/vs_placebo.libs/$VSP_LIBPLACEBO"
+cp "$VSP_SRC/build/subprojects/libplacebo/src/libplacebo.so.$VSPLACEBO_LIBPLACEBO_API" "$OUT_DIR/vs_placebo.libs/$VSP_LIBPLACEBO"
 # Same layout as the wheel: DT_RPATH (passed on to the wheel's glslang, which has none) and libplacebo under its renamed SONAME
-patchelf --replace-needed libplacebo.so.371 "$VSP_LIBPLACEBO" --force-rpath --set-rpath '$ORIGIN/../../vs_placebo.libs' "$OUT_DIR/libvs_placebo.so"
+patchelf --replace-needed libplacebo.so.$VSPLACEBO_LIBPLACEBO_API "$VSP_LIBPLACEBO" --force-rpath --set-rpath '$ORIGIN/../../vs_placebo.libs' "$OUT_DIR/libvs_placebo.so"
 patchelf --set-soname "$VSP_LIBPLACEBO" --remove-rpath "$OUT_DIR/vs_placebo.libs/$VSP_LIBPLACEBO"
 echo "-> $OUT_DIR/libvs_placebo.so (+ vs_placebo.libs/$VSP_LIBPLACEBO)"
 

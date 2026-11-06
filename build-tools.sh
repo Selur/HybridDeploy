@@ -588,7 +588,7 @@ then
   make install
 
   cd ../opus-tools
-  git checkout $(git tag --list | sort -V | tail -1)
+  # master, not the newest tag: v0.2 has no --channels, which Hybrid writes for opusUncoupled (same as HybridMacOSTools)
   ./autogen.sh
   PKG_CONFIG_PATH="$PWD/../lib/pkgconfig" \
   ./configure \
@@ -884,7 +884,7 @@ then
   # QApplication, so it runs without a display and without a Qt platform plugin (the Qt5 based dubhater/D2VWitch needed one).
   git clone --depth 1 https://github.com/Selur/D2VWitch
   clone_ffmpeg FFmpeg
-  git clone --depth 1 --branch R81 https://github.com/vapoursynth/vapoursynth
+  git clone --depth 1 --branch R82 https://github.com/vapoursynth/vapoursynth
 
   build_nasm
 
