@@ -105,10 +105,11 @@ export PIP_CONSTRAINT="$DEPLOY_DIR/vs-constraints.txt"
 # open-svpflow (Interframe/SVP and the SVP methods, docs 47) comes from pip, 0.1.3 (manylinux_2_34) is bit-identical to
 # nightly-20261106-badc0de392ac; the plugins land in site-packages/vapoursynth/plugins/open-svpflow/ (Autoload finds them).
 # dedot pinned to 4.0 (8-16 bit); 3.0 only takes 8 bit (docs 32, 1).
+# mvutensilsvk (tools mv "mvgpu", Vulkan GPU frames) needs VapourSynth R82 (docs 80).
 # Packages confirmed to have a working manylinux wheel (docs 32, 1); dghdrtosdr excluded, win_amd64-only, see docs 32, 1.
 VS_PIP_PACKAGES="
 vapoursynth
-vapoursynth-mvutensils vapoursynth-adaptivegrain vapoursynth-akarin
+vapoursynth-mvutensils vapoursynth-mvutensilsvk==1 vapoursynth-adaptivegrain vapoursynth-akarin
 vapoursynth-awarp vapoursynth-bestsource==23
 vapoursynth-bm3d vapoursynth-bm3dvk vapoursynth-bm3dvk2 vapoursynth-bwdif vapoursynth-cas vapoursynth-cdef
 vapoursynth-cranexpr vapoursynth-d2vsource vapoursynth-dctfilter vapoursynth-dfttest2-cpu
