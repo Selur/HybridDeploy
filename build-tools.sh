@@ -478,14 +478,38 @@ then
   echo "building FDKAAC,..."
   cd "$base_dir"
   rm -rf build
-  git clone --depth 1 https://github.com/nu774/fdkaac.git build
+  mkdir build
   cd build
+  # libfdk-aac from upstream, static: Ubuntu's libfdk-aac2 (2.0.2-3~ubuntu5) has no SBR/PS, fdkaac then refuses HE-AAC and HE-AAC v2
+  git clone https://github.com/mstorsjo/fdk-aac
+  git clone --depth 1 https://github.com/nu774/fdkaac.git
+
+  cd fdk-aac
+  git checkout $(git tag --list 'v*' | sort -V | tail -1)
+  autoreconf -fi
+  ./configure --prefix="$PWD/.." --disable-shared --enable-static --with-pic
+  make $MAKEFLAGS
+  make install
+
+  cd ../fdkaac
   autoreconf -i
-  ./configure
-  make
+  PKG_CONFIG_PATH="$PWD/../lib/pkgconfig" CPPFLAGS="-I$PWD/../include" LDFLAGS="-L$PWD/../lib" LIBS="-lm" ./configure
+  make $MAKEFLAGS
   strip fdkaac
+  if ldd fdkaac | grep -q libfdk-aac; then
+    echo "fdkaac still links a shared libfdk-aac"
+    exit 1
+  fi
   cp -f fdkaac "$base_dir"
   cd "$base_dir"
+
+  cat <<EOL >fdkaac-sources.txt
+https://github.com/mstorsjo/fdk-aac
+$(cd build/fdk-aac && git rev-parse HEAD)
+
+https://github.com/nu774/fdkaac
+$(cd build/fdkaac && git rev-parse HEAD)
+EOL
   rm -rf build
 fi
 
