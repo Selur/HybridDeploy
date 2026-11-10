@@ -3,8 +3,8 @@ set -e
 
 MAKEFLAGS="-j4"
 # Same FFmpeg master commit as Hybrid's Windows ffmpeg.exe; FFMPEG_VERSION is the string `ffmpeg -version` reports.
-FFMPEG_COMMIT="b034eb5e7e871b033e389ae52a933509bd8090c6"
-FFMPEG_VERSION="N-128293-gb034eb5e7e"
+FFMPEG_COMMIT="49a3b1f259e1c34033bf6cca4091a4cb07ebf90d"
+FFMPEG_VERSION="N-128728-g49a3b1f259"
 
 base_dir=$(pwd)/tools/
 
