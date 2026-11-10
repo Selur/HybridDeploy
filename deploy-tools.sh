@@ -212,6 +212,8 @@ install_latest_release_wheel dpid Selur/VapourSynth-dpid
 install_latest_release_wheel AWarpSharp2 Selur/vapoursynth-awarpsharp2
 # ExBlend (Selur/ExBlend, namespace exblend, libExBlend.so): VsExBlend and VsAnimDeblend (Hybrid docs 68)
 install_latest_release_wheel ExBlend Selur/ExBlend
+# DeSpot (Selur/despot, port of DeSpot 3.6.3, namespace despot, libDeSpot.so): VsDespot
+install_latest_release_wheel DeSpot Selur/despot
 
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
