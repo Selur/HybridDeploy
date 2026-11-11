@@ -214,6 +214,8 @@ install_latest_release_wheel AWarpSharp2 Selur/vapoursynth-awarpsharp2
 install_latest_release_wheel ExBlend Selur/ExBlend
 # DeSpot (Selur/despot, port of DeSpot 3.6.3, namespace despot, libDeSpot.so): VsDespot
 install_latest_release_wheel DeSpot Selur/despot
+# AutoLevels (Selur/AutoLevels, port of AutoLevels 0.12 Beta 3, namespace autolevels, libAutoLevels.so): VsAutoLevels (Hybrid docs 88)
+install_latest_release_wheel AutoLevels Selur/AutoLevels
 
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
