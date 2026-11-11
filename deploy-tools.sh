@@ -216,6 +216,8 @@ install_latest_release_wheel ExBlend Selur/ExBlend
 install_latest_release_wheel DeSpot Selur/despot
 # AutoLevels (Selur/AutoLevels, port of AutoLevels 0.12 Beta 3, namespace autolevels, libAutoLevels.so): VsAutoLevels (Hybrid docs 88)
 install_latest_release_wheel AutoLevels Selur/AutoLevels
+# Deflicker (Selur/Deflicker, port of Deflicker 0.6, namespace deflicker, libDeflicker.so): mean luma stabilizer
+install_latest_release_wheel Deflicker Selur/Deflicker
 
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
