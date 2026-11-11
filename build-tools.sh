@@ -158,26 +158,31 @@ fi
 ### tsMuxeR
 if echo "$args" | grep -q -i -w -E 'all|tsmuxer'
 then
-  echo "building tsMuxeR,..."
+  echo "downloading tsMuxeR,..."
   cd "$base_dir"
   rm -rf build
   mkdir build
   cd build
-  git clone --depth 1 https://github.com/teaching-droid/tsMuxer
-  cd tsMuxer
-  # Fix CMake >= 4.x compatibility everywhere
-  find . -name CMakeLists.txt -print0 | xargs -0 sed -i 's/cmake_minimum_required *(VERSION \([0-2]\|3\.[0-4]\))/cmake_minimum_required(VERSION 3.5)/'
-
-  # CLI only: the fork builds the Qt GUI whenever Qt6 is found (needs Qt6LinguistTools)
-  cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DTSMUXER_GUI=OFF
-  ninja -C build
-  mkdir -p bin
-  cp build/tsMuxer/tsmuxer bin/tsMuxeR
-  cd bin
-  strip tsMuxeR
+  # teaching-droid fork (3.x): CLI from the newest release (needs GLIBC_2.34, runs on 24.04 and 26.04)
+  tsm_repo=https://github.com/teaching-droid/tsMuxer
+  tsm_tag=$(curl -sfI "$tsm_repo/releases/latest" | sed -n 's|^[Ll]ocation: .*/releases/tag/\([^[:space:]]*\).*|\1|p')
+  if [ -z "$tsm_tag" ]; then
+    echo "tsMuxeR: no latest release found"
+    exit 1
+  fi
+  tsm_zip="tsMuxeR-${tsm_tag#v}-linux-x64.zip"
+  curl -sfL -o "$tsm_zip" "$tsm_repo/releases/download/$tsm_tag/$tsm_zip"
+  curl -sfL -o "$tsm_zip.sha256" "$tsm_repo/releases/download/$tsm_tag/$tsm_zip.sha256"
+  sha256sum -c "$tsm_zip.sha256"
+  unzip -o -q "$tsm_zip" tsMuxeR
   chmod a+x tsMuxeR
-  mv tsMuxeR "$base_dir"
+  mv -f tsMuxeR "$base_dir"
   cd "$base_dir"
+
+  cat <<EOL >tsMuxeR-sources.txt
+$tsm_repo/releases/tag/$tsm_tag
+$(cut -d' ' -f1 "build/$tsm_zip.sha256")  $tsm_zip
+EOL
   rm -rf build
 fi
 
