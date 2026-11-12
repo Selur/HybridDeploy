@@ -150,6 +150,10 @@ echo "  📦 Installing GitHub-release wheels (vinverse, grwrld)..."
 CURL_RETRY=(--retry 3 --retry-delay 5 --retry-all-errors)
 # The release API allows 60 requests per hour and IP without a token (about three deploys); a GITHUB_TOKEN raises it to 5000.
 # A token without any scopes is enough (public repos); it goes to api.github.com only, never to the asset downloads.
+# Without GITHUB_TOKEN in the environment the token comes from ~/.config/hybriddeploy/github_token, if present.
+if [ -z "${GITHUB_TOKEN:-}" ] && [ -s "$HOME/.config/hybriddeploy/github_token" ]; then
+  GITHUB_TOKEN="$(tr -d '[:space:]' < "$HOME/.config/hybriddeploy/github_token")"
+fi
 GITHUB_AUTH=()
 if [ -n "${GITHUB_TOKEN:-}" ]; then
   GITHUB_AUTH=(-H "Authorization: Bearer $GITHUB_TOKEN")
