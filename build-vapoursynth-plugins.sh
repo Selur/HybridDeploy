@@ -313,7 +313,10 @@ git clone --depth 1 --recurse-submodules \
   ninja -C build -j"$JOBS"
 )
 cp "$RIFE_SRC/build/librife.so" "$OUT_DIR/"
-echo "-> $OUT_DIR/librife.so"
+# librife.so loads its models from models/ next to itself
+rm -rf "$OUT_DIR/models"
+cp -r "$RIFE_SRC/models" "$OUT_DIR/models"
+echo "-> $OUT_DIR/librife.so (+ models/)"
 
 # --- Done --------------------------------------------------------------------
 

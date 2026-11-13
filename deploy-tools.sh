@@ -244,6 +244,8 @@ VS_PLUGDIR="$VS_SITE/vapoursynth/plugins"
 echo "  🔧 Building the 12 plugins with no pip wheel (docs 32, 1)..."
 "$SCRIPT_DIR/build-vapoursynth-plugins.sh" "$DEPLOY_DIR/vsplugins-build"
 cp "$DEPLOY_DIR"/vsplugins-build/*.so "$DEPLOY_DIR"/vsplugins-build/*-LICENSE.txt "$VS_PLUGDIR/"
+# RIFE's models next to librife.so (the plugin looks for <plugin dir>/models)
+cp -r "$DEPLOY_DIR/vsplugins-build/models" "$VS_PLUGDIR/"
 # OpenCL loader and libgomp of the Anime4KCPP build (RUNPATH $ORIGIN/../../vapoursynth_anime4kcpp.libs)
 cp -r "$DEPLOY_DIR/vsplugins-build/vapoursynth_anime4kcpp.libs" "$VS_SITE/"
 # Patched libplacebo of the vs-placebo build replaces the wheel's copy under the same renamed file name (libvs_placebo.so came with *.so)
