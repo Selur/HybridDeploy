@@ -137,6 +137,12 @@ for pkg in $VS_PIP_PACKAGES; do
     --disable-pip-version-check -q \
     || echo "  ⚠️ $pkg failed to install (see docs 32, 1 for known exceptions)"
 done
+# Local wheels in tools/wheels/ replace the pip versions (--no-deps), e.g. a CI build that is not on PyPI yet
+for whl in "$TOOLS_DIR"/wheels/*.whl; do
+  [ -f "$whl" ] || continue
+  echo "  📦 Installing local wheel $(basename "$whl")..."
+  "$VS_PY_BIN" -m pip install --no-deps --disable-pip-version-check -q "$whl"
+done
 
 echo "  📦 Installing GitHub-release wheels (vinverse, grwrld)..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
