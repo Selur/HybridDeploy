@@ -85,9 +85,27 @@ build_meson Retinex \
   https://github.com/Selur/VapourSynth-Retinex-api4.git \
   libretinex.so
 
-build_meson TCanny \
-  https://github.com/HomeOfVapourSynthEvolution/VapourSynth-TCanny.git \
-  libtcanny.so
+# TCanny: the SIMD files bind 117 'auto& v{ VecX().load(...) }' to a temporary that dies with the statement; GCC then reads
+# garbage (black frames with every opt but 1, MSVC keeps the value). 'auto' copies the vector and matches the Windows DLL.
+echo "=== Building TCanny (meson) ==="
+TC_SRC="$WORK_DIR/TCanny"
+git clone --depth 1 https://github.com/HomeOfVapourSynthEvolution/VapourSynth-TCanny.git "$TC_SRC"
+(
+  cd "$TC_SRC"
+  sed -i -E 's/auto& ([A-Za-z_0-9]+)\{ (Vec[0-9a-z]+)\(\)\.load/auto \1{ \2().load/' TCanny/TCanny_SSE2.cpp TCanny/TCanny_AVX2.cpp TCanny/TCanny_AVX512.cpp
+  ! grep -Eq 'auto& [A-Za-z_0-9]+\{ Vec' TCanny/TCanny_SSE2.cpp TCanny/TCanny_AVX2.cpp TCanny/TCanny_AVX512.cpp || { echo "TCanny patch did not apply"; exit 1; }
+  meson setup build
+  ninja -C build -j"$JOBS"
+)
+cp "$TC_SRC/build/libtcanny.so" "$OUT_DIR/"
+echo "-> $OUT_DIR/libtcanny.so"
+
+# tcannyx: TCanny r14 rewrite (namespace tcannyx, same arguments and output), tools value of the tcanny family;
+# CPU only, Hybrid never hands it GPU frames
+build_meson TCannyX \
+  https://github.com/AmusementClub/vapoursynth-tcannyx.git \
+  libtcannyx.so \
+  "" r1 . libtcannyx.so "-Dvulkan=false -Dcuda=false -Dtests=false -Dvapoursynth_headers=$SDK_DIR/vapoursynth/include"
 
 # --- Step 3a: plugins without a wheel, filters that had no Linux build before (docs 32, 6) ----------------
 # FrFun7, DeJitter (vcm), ReduceFlicker and DeblockPP7 come as API 4 wheels from deploy-tools.sh, so no API 3 plugin is built here any more.
