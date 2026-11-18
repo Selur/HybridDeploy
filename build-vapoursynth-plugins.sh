@@ -330,11 +330,12 @@ git clone --depth 1 --recurse-submodules \
   meson setup build
   ninja -C build -j"$JOBS"
 )
-cp "$RIFE_SRC/build/librife.so" "$OUT_DIR/"
-# librife.so loads its models from models/ next to itself
-rm -rf "$OUT_DIR/models"
-cp -r "$RIFE_SRC/models" "$OUT_DIR/models"
-echo "-> $OUT_DIR/librife.so (+ models/)"
+# not in the AppImage: librife.so is the input of the general add-on's archive rife_<version>_linux.7z (Hybrid docs 95,
+# build_general_addon.py --linux-src); the 24.04 build serves both AppImages, the models are a shared archive
+rm -rf "$OUT_DIR/general-addon/RIFE"
+mkdir -p "$OUT_DIR/general-addon/RIFE"
+cp "$RIFE_SRC/build/librife.so" "$OUT_DIR/general-addon/RIFE/"
+echo "-> $OUT_DIR/general-addon/RIFE/librife.so (add-on input, not deployed)"
 
 # --- Done --------------------------------------------------------------------
 

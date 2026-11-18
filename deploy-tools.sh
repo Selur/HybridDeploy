@@ -246,8 +246,6 @@ VS_PLUGDIR="$VS_SITE/vapoursynth/plugins"
 echo "  🔧 Building the 12 plugins with no pip wheel (docs 32, 1)..."
 "$SCRIPT_DIR/build-vapoursynth-plugins.sh" "$DEPLOY_DIR/vsplugins-build"
 cp "$DEPLOY_DIR"/vsplugins-build/*.so "$DEPLOY_DIR"/vsplugins-build/*-LICENSE.txt "$VS_PLUGDIR/"
-# RIFE's models next to librife.so (the plugin looks for <plugin dir>/models)
-cp -r "$DEPLOY_DIR/vsplugins-build/models" "$VS_PLUGDIR/"
 # OpenCL loader and libgomp of the Anime4KCPP build (RUNPATH $ORIGIN/../../vapoursynth_anime4kcpp.libs)
 cp -r "$DEPLOY_DIR/vsplugins-build/vapoursynth_anime4kcpp.libs" "$VS_SITE/"
 # Patched libplacebo of the vs-placebo build replaces the wheel's copy under the same renamed file name (libvs_placebo.so came with *.so)
@@ -264,16 +262,7 @@ if [ ! -d "$VS_DIR/vsscripts/.git" ]; then
   git clone --depth 1 https://github.com/Selur/VapoursynthScriptsInHybrid.git "$VS_DIR/vsscripts"
 fi
 
-# GLSL shader sources for the GLSL* color/sharpen filters and the GLSL-Resizers AI upscalers
-# (docs 32, 2.6); two different base paths, matching where Hybrid's own C++ looks for each:
-# GLSL/ under the plugins dir (VsFilter::filterLocation), GLSL-Resizers/ next to the binary itself.
-GLSL_CLONE="$DEPLOY_DIR/hybrid-glsl-filters"
-if [ ! -d "$GLSL_CLONE/.git" ]; then
-  echo "  ⬇️ Cloning hybrid-glsl-filters..."
-  git clone --depth 1 https://github.com/Selur/hybrid-glsl-filters.git "$GLSL_CLONE"
-fi
-cp -r "$GLSL_CLONE/GLSL" "$VS_PLUGDIR/"
-cp -r "$GLSL_CLONE/GLSL-Resizers" "$APPDIR/usr/bin/"
+# LUTs, RIFE and the GLSL shaders are not bundled: Hybrid installs them as its add-on general into ~/.hybrid/addons (docs 95)
 
 # Hybrid's translations (docs 58) go next to the binary; qtbase_*.qm already sit in usr/translations (qt.conf).
 HYBRID_SRC="${HYBRID_SRC:-$SCRIPT_DIR/../Hybrid}"
