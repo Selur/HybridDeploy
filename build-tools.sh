@@ -153,6 +153,23 @@ then
   rm -rf build
 fi
 
+### 7zz (7-Zip 25.01, unpacks Hybrid's add-on archives; version and SHA-256 pinned like the macOS bundle)
+if echo "$args" | grep -q -i -w -E 'all|7zz'
+then
+  echo "Downloading 7-Zip,..."
+  cd "$base_dir"
+  rm -rf build
+  mkdir build
+  cd build
+  wget -O 7z2501-linux-x64.tar.xz https://github.com/ip7z/7zip/releases/download/25.01/7z2501-linux-x64.tar.xz
+  echo "4ca3b7c6f2f67866b92622818b58233dc70367be2f36b498eb0bdeaaa44b53f4  7z2501-linux-x64.tar.xz" | sha256sum -c -
+  tar xf 7z2501-linux-x64.tar.xz 7zz
+  chmod a+x 7zz
+  cp -f 7zz "$base_dir"
+  cd "$base_dir"
+  rm -rf build
+fi
+
 ### fast builds ###
 
 ### tsMuxeR
