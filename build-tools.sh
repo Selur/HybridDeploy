@@ -1098,6 +1098,51 @@ then
   rm -rf build
 fi
 
+## SVT-AV1-HDR (juliobbv-p fork of SVT-AV1 4.3.0, installed as SvtAv1EncApp-HDR; Hybrid docs 97)
+if echo "$args" | grep -q -i -w -E 'all|svtav1hdr'
+then
+  echo "building SVT-AV1-HDR,..."
+  SVTAV1HDR_COMMIT=0ce7e13af2396bf3bf06408a09f1138f82b01b28
+  LIBDOVI_TAG=libdovi-3.4.0
+  LIBHDR10PLUS_TAG=libhdr10plus-2.1.5
+  cd "$base_dir"
+  rm -rf build
+  mkdir -p build
+  cd build
+  top="$PWD"
+  if [ ! -x "$HOME/.cargo/bin/cargo" ]; then
+    wget -O rustup-init.sh https://sh.rustup.rs
+    sh ./rustup-init.sh -y
+  fi
+  "$HOME/.cargo/bin/rustup" update || true
+  export PATH="$HOME/.cargo/bin:$PATH"
+  # cargo-c builds libdovi and hdr10plus-rs as static C libraries; vendored OpenSSL, so no libssl-dev
+  cargo cinstall --version >/dev/null 2>&1 || cargo install cargo-c --locked --features vendored-openssl || exit 1
+  git clone --depth 1 -b "$LIBDOVI_TAG" https://github.com/quietvoid/dovi_tool dovi_tool
+  git clone --depth 1 -b "$LIBHDR10PLUS_TAG" https://github.com/quietvoid/hdr10plus_tool hdr10plus_tool
+  (cd dovi_tool/dolby_vision && cargo cinstall --release --library-type=staticlib --prefix="$top/prefix" --libdir=lib) || exit 1
+  (cd hdr10plus_tool/hdr10plus && cargo cinstall --release --library-type=staticlib --prefix="$top/prefix" --libdir=lib) || exit 1
+  git init -q svt
+  git -C svt fetch -q --depth 1 https://github.com/juliobbv-p/SVT-AV1-HDR.git "$SVTAV1HDR_COMMIT"
+  git -C svt checkout -q FETCH_HEAD
+  # both Rust libraries carry their own copy of the Rust std (same toolchain): allow the duplicate symbols;
+  # no EXT_LIB_STATIC, it would force the system libraries of the Rust libraries (gcc_s) static as well;
+  # --gc-sections drops the unused process code of the Rust std (pidfd_spawnp: GLIBC_2.39 on the 24.04 build)
+  PKG_CONFIG_PATH="$top/prefix/lib/pkgconfig" cmake -S svt -B svt/build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF \
+    -DLIBDOVI_FOUND=1 -DLIBHDR10PLUS_RS_FOUND=1 \
+    -DCMAKE_EXE_LINKER_FLAGS="-L$top/prefix/lib -Wl,--allow-multiple-definition -Wl,--gc-sections"
+  make -C svt/build $MAKEFLAGS SvtAv1EncApp || exit 1
+  strip svt/Bin/Release/SvtAv1EncApp
+  cp -f svt/Bin/Release/SvtAv1EncApp "$base_dir/SvtAv1EncApp-HDR"
+  cd "$base_dir"
+  cat <<EOL >SvtAv1EncApp-HDR-sources.txt
+https://github.com/juliobbv-p/SVT-AV1-HDR $SVTAV1HDR_COMMIT
+https://github.com/quietvoid/dovi_tool $LIBDOVI_TAG
+https://github.com/quietvoid/hdr10plus_tool $LIBHDR10PLUS_TAG
+EOL
+  rm -rf build
+fi
+
 ### ffmpeg
 if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   echo "building FFmpeg,..."
