@@ -861,7 +861,7 @@ then
   echo "building x265,..."
   cd "$base_dir"
   rm -rf x265
-  git clone --depth 1 https://bitbucket.org/multicoreware/x265_git.git x265
+  git clone --depth 1 https://github.com/Multicorewareinc/x265.git x265
   # Version.cmake reads the last release tag and the distance to it, a depth-1 clone reports "unknown": deepen until a tag is reachable
   until git -C x265 describe --abbrev=0 --tags >/dev/null 2>&1; do
     git -C x265 fetch -q --deepen=100
@@ -1185,7 +1185,7 @@ if echo "$args" | grep -q -i -w -E 'all|ffmpeg'; then
   git clone --depth 1 https://github.com/xiph/libopusenc
   git clone --depth 1 https://github.com/xiph/opusfile
   svn checkout https://svn.code.sf.net/p/lame/svn/trunk/lame
-  git clone --depth 1 https://bitbucket.org/multicoreware/x265_git.git x265
+  git clone --depth 1 https://github.com/Multicorewareinc/x265.git x265
   x265_cstdint_fix x265
 
   # Build tools
@@ -1501,7 +1501,7 @@ $(cd build/opusfile && git rev-parse HEAD)
 https://svn.code.sf.net/p/lame/svn/trunk/lame
 revision $(cd build/lame && svn info | grep '^Revision:' | cut -d' ' -f2)
 
-https://bitbucket.org/multicoreware/x265
+https://github.com/Multicorewareinc/x265
 $(cd build/x265 && git rev-parse HEAD)
 EOL
   cd "$base_dir"
