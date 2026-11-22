@@ -203,6 +203,35 @@ EOL
   rm -rf build
 fi
 
+### nvencc
+if echo "$args" | grep -q -i -w -E 'all|nvencc|nvenc'
+then
+  echo "downloading nvencc,..."
+  cd "$base_dir"
+  rm -rf build
+  mkdir build
+  cd build
+  # rigaya's release package (built on Ubuntu 20.04, needs glibc 2.31 and the driver's libcuda.so.1): one binary for 24.04 and 26.04
+  nvenc_repo=https://github.com/rigaya/NVEnc
+  nvenc_tag=$(curl -sfI "$nvenc_repo/releases/latest" | sed -n 's|^[Ll]ocation: .*/releases/tag/\([^[:space:]]*\).*|\1|p')
+  if [ -z "$nvenc_tag" ]; then
+    echo "nvencc: no latest release found"
+    exit 1
+  fi
+  nvenc_deb="nvencc_${nvenc_tag}_amd64.deb"
+  curl -sfL -o "$nvenc_deb" "$nvenc_repo/releases/download/$nvenc_tag/$nvenc_deb"
+  dpkg-deb --fsys-tarfile "$nvenc_deb" | tar -xO ./usr/bin/nvencc > nvencc
+  chmod a+x nvencc
+  mv -f nvencc "$base_dir"
+  cd "$base_dir"
+
+  cat <<EOL >nvencc-sources.txt
+$nvenc_repo/releases/tag/$nvenc_tag
+$(sha256sum "build/$nvenc_deb" | cut -d' ' -f1)  $nvenc_deb
+EOL
+  rm -rf build
+fi
+
 ### telxcc
 if echo "$args" | grep -q -i -w -E 'all|telxcc'
 then

@@ -725,6 +725,9 @@ fi
 mkdir -p "$APPDIR/usr/lib/wayland-fallback"
 mv -v "$APPDIR"/usr/lib/libwayland-*.so* "$APPDIR/usr/lib/wayland-fallback/" 2>/dev/null || true
 
+# nvencc links libcuda.so.1: a copy linuxdeploy takes from the build host (under WSL a stub) would hide the driver's library
+rm -fv "$APPDIR"/usr/lib/libcuda.so*
+
 ARCH=x86_64 ./appimagetool-x86_64.AppImage "$APPDIR" "$OUT_APPIMAGE"
 
 cd "$SCRIPT_DIR"
