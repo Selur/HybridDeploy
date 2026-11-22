@@ -37,5 +37,10 @@ if config_path.exists():
 
 entries[key] = f"{esc(key)} = [{esc(python_exe)},{esc(libpython)},{esc(mtime)}]"
 
+# nvencc opens VSScript as libvapoursynth-script.so (a link beside libvsscript.so); VSScript looks its config up by that path
+alias = HERE / "libvapoursynth-script.so"
+if alias.exists():
+    entries[str(alias)] = f"{esc(alias)} = [{esc(python_exe)},{esc(libpython)},{esc(mtime)}]"
+
 config_path.write_text("\n".join(entries.values()) + "\n")
 print(f"vsconfig-write: registered {key}")

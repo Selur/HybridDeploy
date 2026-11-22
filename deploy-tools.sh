@@ -277,6 +277,8 @@ echo "  🌐 $(ls "$APPDIR"/usr/bin/translations/hybrid_*.ts | wc -l) translatio
 # Stable, Python-version-independent paths for Hybrid's C++ side (Stufe E); "site-packages" name is required, see SystemHelper::resolveVapoursynthSitePackagesPath().
 ln -sf "python/lib/python3.14/site-packages" "$VS_DIR/site-packages"
 ln -sf "site-packages/vapoursynth/vspipe" "$VS_DIR/vspipe"
+# nvencc --vpy opens libvapoursynth-script.so, the wheel names it libvsscript.so (vsconfig-write.py registers both paths)
+ln -sf "libvsscript.so" "$VS_DIR/python/lib/python3.14/site-packages/vapoursynth/libvapoursynth-script.so"
 
 echo "🔍 Scanning for missing dependencies..."
 
