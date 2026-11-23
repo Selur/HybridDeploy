@@ -230,6 +230,8 @@ install_latest_release_wheel AutoLevels Selur/AutoLevels
 install_latest_release_wheel Deflicker Selur/Deflicker
 # Dust (Selur/Dust, port of DustPort 1.0.0, namespace dust, libDust.so): DustDenoise.py / VsDustDenoise (Hybrid docs 92)
 install_latest_release_wheel Dust Selur/Dust
+# Deen (Selur/Deen, port of Deen 1.0 beta 1, namespace deen, libDeen.so): fupp.py (HybridFuPP)
+install_latest_release_wheel Deen Selur/Deen
 
 echo "  📦 Installing vsjetpack from git..."
 "$VS_PY_BIN" -m pip install --disable-pip-version-check -q \
