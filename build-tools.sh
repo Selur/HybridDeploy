@@ -5,6 +5,8 @@ MAKEFLAGS="-j4"
 # Same FFmpeg master commit as Hybrid's Windows ffmpeg.exe; FFMPEG_VERSION is the string `ffmpeg -version` reports.
 FFMPEG_COMMIT="49a3b1f259e1c34033bf6cca4091a4cb07ebf90d"
 FFMPEG_VERSION="N-128728-g49a3b1f259"
+# libvmaf for aomenc --tune=vmaf (static, model vmaf_v0.6.1.json goes next to the program)
+VMAF_VERSION="v3.0.0"
 
 base_dir=$(pwd)/tools/
 
@@ -828,16 +830,24 @@ then
   git clone --depth 1 https://aomedia.googlesource.com/aom build
   # webmenc.cc gives every snprintf() the whole buffer size, _FORTIFY_SOURCE aborts WebM output; drop once fixed (aomedia.issues.chromium.org/issues/575506670, docs 32, 1)
   sed -i 's/snprintf(cur, total_size, /snprintf(cur, total_size - static_cast<size_t>(cur - result), /' build/common/webmenc.cc
+  # --tune=vmaf: static libvmaf; Hybrid passes the model next to the program (--vmaf-model-path)
+  git clone --depth 1 -b "$VMAF_VERSION" https://github.com/Netflix/vmaf build/vmaf
+  meson setup build/vmaf/libvmaf/build build/vmaf/libvmaf --prefix="$base_dir/build/vmaf-install" --libdir=lib \
+    --buildtype=release --default-library=static -Denable_tests=false -Denable_docs=false -Dbuilt_in_models=false
+  ninja -C build/vmaf/libvmaf/build install
   mkdir -p build/build-aom
   cd build/build-aom
-  cmake .. -DCMAKE_BUILD_TYPE=Release -DCONFIG_SHARED=0
+  PKG_CONFIG_PATH="$base_dir/build/vmaf-install/lib/pkgconfig" cmake .. -DCMAKE_BUILD_TYPE=Release -DCONFIG_SHARED=0 -DCONFIG_TUNE_VMAF=1
   make $MAKEFLAGS aomenc
   strip aomenc
   cp -f aomenc "$base_dir"
+  cp -f ../vmaf/model/vmaf_v0.6.1.json "$base_dir"
   cd "$base_dir"
   cat <<EOL >aomenc-sources.txt
 https://aomedia.googlesource.com/aom
 $(cd build && git rev-parse HEAD)
+https://github.com/Netflix/vmaf
+$VMAF_VERSION
 EOL
   rm -rf build
 fi
