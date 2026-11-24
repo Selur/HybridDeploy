@@ -1141,7 +1141,7 @@ fi
 if echo "$args" | grep -q -i -w -E 'all|svtav1hdr'
 then
   echo "building SVT-AV1-HDR,..."
-  SVTAV1HDR_COMMIT=0ce7e13af2396bf3bf06408a09f1138f82b01b28
+  SVTAV1HDR_COMMIT=421c65909eeb3703d5e8a7fda21a38374dc7565d
   LIBDOVI_TAG=libdovi-3.4.0
   LIBHDR10PLUS_TAG=libhdr10plus-2.1.5
   cd "$base_dir"
