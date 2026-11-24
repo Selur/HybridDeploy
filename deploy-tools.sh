@@ -220,6 +220,8 @@ install_latest_release_wheel RealSR Selur/VapourSynth-RealSR-ncnn-Vulkan
 install_latest_release_wheel dpid Selur/VapourSynth-dpid
 # AWarpSharp2 (Selur/vapoursynth-awarpsharp2, API 4 port, namespace warp, libawarpsharp2.so): tools value warp next to awarp
 install_latest_release_wheel AWarpSharp2 Selur/vapoursynth-awarpsharp2
+# aWarpSharpMT (Selur/aWarpSharpMT, namespace awarpsharpmt, libaWarpSharpMT.so): tools value awarpsharpmt (warp default)
+install_latest_release_wheel aWarpSharpMT Selur/aWarpSharpMT
 # ExBlend (Selur/ExBlend, namespace exblend, libExBlend.so): VsExBlend and VsAnimDeblend (Hybrid docs 68)
 install_latest_release_wheel ExBlend Selur/ExBlend
 # DeSpot (Selur/despot, port of DeSpot 3.6.3, namespace despot, libDeSpot.so): VsDespot
