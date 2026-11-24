@@ -120,7 +120,7 @@ vapoursynth-edgemasks vapoursynth-eedi3 vapoursynth-eedi3vk2
 vapoursynth-fillborders vapoursynth-ffms2 vapoursynth-fmtconv
 vapoursynth-hysteresis vapoursynth-iscombed vapoursynth-knlmeanscl
 vapoursynth-lsmas vapoursynth-readmpls
-vapoursynth-mvtools vapoursynth-nnedi3vk vapoursynth-knlmeansvk vapoursynth-feel==1.3.4
+vapoursynth-mvtools vapoursynth-nnedi3vk vapoursynth-knlmeansvk vapoursynth-feel==1.4.0
 vapoursynth-nlm-ispc vapoursynth-resize2 vapoursynth-sangnom
 vapoursynth-scenechange vapoursynth-scxvid vapoursynth-sneedif vapoursynth-subtext
 vapoursynth-timecube vapoursynth-vivtc vapoursynth-tivtc
