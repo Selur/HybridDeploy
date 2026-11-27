@@ -230,6 +230,8 @@ install_latest_release_wheel DeSpot Selur/despot
 install_latest_release_wheel AutoLevels Selur/AutoLevels
 # Deflicker (Selur/Deflicker, port of Deflicker 0.6, namespace deflicker, libDeflicker.so): mean luma stabilizer
 install_latest_release_wheel Deflicker Selur/Deflicker
+# DeFreq (Selur/DeFreqPlus, port of DeFreq 0.7, namespace defreq, libDeFreq.so, FFTW built in): VsDeFreq (Hybrid docs 108)
+install_latest_release_wheel DeFreq Selur/DeFreqPlus
 # Dust (Selur/Dust, port of DustPort 1.0.0, namespace dust, libDust.so): DustDenoise.py / VsDustDenoise (Hybrid docs 92)
 install_latest_release_wheel Dust Selur/Dust
 # Deen (Selur/Deen, port of Deen 1.0 beta 1, namespace deen, libDeen.so): fupp.py (HybridFuPP)
